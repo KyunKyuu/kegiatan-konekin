@@ -130,6 +130,30 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
+    /* Time grid: absolutely position cards so they visually span their full
+       duration across hour rows, like Google Calendar, instead of only
+       appearing in their starting hour's row. */
+    .time-timeline {
+        position: relative;
+    }
+
+    .time-events-overlay {
+        position: absolute;
+        top: 0;
+        left: 90px;
+        right: 0;
+        bottom: 0;
+        padding: 0 20px;
+        box-sizing: border-box;
+        pointer-events: none;
+    }
+
+    .day-activity-card.card-absolute {
+        position: absolute;
+        overflow: hidden;
+        pointer-events: auto;
+    }
+
     .day-activity-card:hover {
         transform: translateY(-1px);
         filter: brightness(1.08);
@@ -718,53 +742,119 @@
                     @php
                         $startHour = 7;
                         $endHour = 22;
+                        $rowHeightPx = 90;
+                        $gridStartMinutes = $startHour * 60;
+                        $gridEndMinutes = ($endHour + 1) * 60;
+
+                        // Build [start, end] minute intervals (clipped to the visible grid)
+                        // for every timed activity of the day.
+                        $timedEvents = $timedActivities->map(function($act) use ($gridStartMinutes, $gridEndMinutes) {
+                            [$sh, $sm] = array_map('intval', explode(':', $act->start_time));
+                            $start = max($sh * 60 + $sm, $gridStartMinutes);
+
+                            $end = $start + 60;
+                            if ($act->end_time) {
+                                [$eh, $em] = array_map('intval', explode(':', $act->end_time));
+                                $end = $eh * 60 + $em;
+                            }
+                            $end = min(max($end, $start + 15), $gridEndMinutes);
+
+                            return ['activity' => $act, 'start' => $start, 'end' => $end];
+                        })->sortBy('start')->values();
+
+                        // Group overlapping events into clusters, then give each event in a
+                        // cluster its own side-by-side column (same approach Google Calendar
+                        // uses), so overlapping activities don't visually collide.
+                        $clusters = [];
+                        $currentCluster = [];
+                        $currentClusterEnd = null;
+                        foreach ($timedEvents as $ev) {
+                            if ($currentClusterEnd !== null && $ev['start'] >= $currentClusterEnd) {
+                                $clusters[] = $currentCluster;
+                                $currentCluster = [];
+                                $currentClusterEnd = null;
+                            }
+                            $currentCluster[] = $ev;
+                            $currentClusterEnd = $currentClusterEnd === null ? $ev['end'] : max($currentClusterEnd, $ev['end']);
+                        }
+                        if (!empty($currentCluster)) {
+                            $clusters[] = $currentCluster;
+                        }
+
+                        $timedEventLayout = [];
+                        foreach ($clusters as $cluster) {
+                            $columnsEndTimes = [];
+                            $columnOf = [];
+                            foreach ($cluster as $i => $ev) {
+                                $placedCol = null;
+                                foreach ($columnsEndTimes as $colIdx => $endTime) {
+                                    if ($ev['start'] >= $endTime) {
+                                        $columnsEndTimes[$colIdx] = $ev['end'];
+                                        $placedCol = $colIdx;
+                                        break;
+                                    }
+                                }
+                                if ($placedCol === null) {
+                                    $placedCol = count($columnsEndTimes);
+                                    $columnsEndTimes[$placedCol] = $ev['end'];
+                                }
+                                $columnOf[$i] = $placedCol;
+                            }
+                            $maxCols = count($columnsEndTimes);
+                            foreach ($cluster as $i => $ev) {
+                                $widthPct = 100 / $maxCols;
+                                $timedEventLayout[] = [
+                                    'activity' => $ev['activity'],
+                                    'top' => round((($ev['start'] - $gridStartMinutes) / 60) * $rowHeightPx, 1),
+                                    'height' => round((($ev['end'] - $ev['start']) / 60) * $rowHeightPx, 1),
+                                    'left' => round($columnOf[$i] * $widthPct, 2),
+                                    'width' => round($widthPct, 2),
+                                ];
+                            }
+                        }
                     @endphp
-                    
+
                     <div class="time-timeline">
                         @for($h = $startHour; $h <= $endHour; $h++)
                             @php
                                 $timeStr = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00';
-                                // Get events that start within this hour slot
-                                $slotEvents = $timedActivities->filter(function($act) use ($h) {
-                                    $actHour = (int) explode(':', $act->start_time)[0];
-                                    return $actHour === $h;
-                                });
                             @endphp
                             <div class="time-row">
                                 <div class="time-label">{{ $timeStr }}</div>
-                                <div class="time-slot-content" 
-                                     @auth 
-                                         onclick="handleTimeSlotClick(event, '{{ $activeDateStr }}', '{{ str_pad($h, 2, '0', STR_PAD_LEFT) }}:00')" 
+                                <div class="time-slot-content"
+                                     @auth
+                                         onclick="handleTimeSlotClick(event, '{{ $activeDateStr }}', '{{ str_pad($h, 2, '0', STR_PAD_LEFT) }}:00')"
                                      @endauth>
-                                     
                                     @auth
-                                        @if($slotEvents->count() > 0)
-                                            <div class="slot-activities">
-                                                @foreach($slotEvents as $activity)
-                                                    @php
-                                                        $st = Carbon\Carbon::parse($activity->start_time)->format('H:i');
-                                                        $et = $activity->end_time ? Carbon\Carbon::parse($activity->end_time)->format('H:i') : '';
-                                                    @endphp
-                                                    <div class="day-activity-card theme-{{ $categoryColors[$activity->category] ?? 'grey' }}" 
-                                                         onclick="showActivityDetail(event, {{ json_encode($activity) }}, {{ json_encode($activity->participants->pluck('name')) }}, {{ json_encode($activity->pics->pluck('name')) }}, {{ json_encode(Auth::check() && (Auth::id() === $activity->user_id || Auth::user()->is_admin)) }})">
-                                                        <div class="card-time-badge"><i class="fa-solid fa-clock"></i> {{ $st }}{{ $et ? ' - ' . $et : '' }}</div>
-                                                        <div class="card-title">{{ $activity->description }}</div>
-                                                        <div class="card-meta">
-                                                            <span><i class="fa-solid fa-user-tie"></i> PIC: {{ $activity->pics->pluck('name')->implode(', ') ?: '-' }}</span>
-                                                            <span><i class="fa-solid fa-users"></i> Terlibat: {{ $activity->participants->pluck('name')->implode(', ') ?: '-' }}</span>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <div class="empty-slot-hint">
-                                                <span class="hint-text"><i class="fa-solid fa-plus animate-pulse"></i> Tambah Kegiatan Jam {{ $timeStr }}</span>
-                                            </div>
-                                        @endif
+                                        <div class="empty-slot-hint">
+                                            <span class="hint-text"><i class="fa-solid fa-plus animate-pulse"></i> Tambah Kegiatan Jam {{ $timeStr }}</span>
+                                        </div>
                                     @endauth
                                 </div>
                             </div>
                         @endfor
+
+                        @auth
+                            <div class="time-events-overlay">
+                                @foreach($timedEventLayout as $item)
+                                    @php
+                                        $activity = $item['activity'];
+                                        $st = Carbon\Carbon::parse($activity->start_time)->format('H:i');
+                                        $et = $activity->end_time ? Carbon\Carbon::parse($activity->end_time)->format('H:i') : '';
+                                    @endphp
+                                    <div class="day-activity-card card-absolute theme-{{ $categoryColors[$activity->category] ?? 'grey' }}"
+                                         style="top: {{ $item['top'] }}px; height: {{ $item['height'] }}px; left: {{ $item['left'] }}%; width: calc({{ $item['width'] }}% - 6px);"
+                                         onclick="showActivityDetail(event, {{ json_encode($activity) }}, {{ json_encode($activity->participants->pluck('name')) }}, {{ json_encode($activity->pics->pluck('name')) }}, {{ json_encode(Auth::check() && (Auth::id() === $activity->user_id || Auth::user()->is_admin)) }})">
+                                        <div class="card-time-badge"><i class="fa-solid fa-clock"></i> {{ $st }}{{ $et ? ' - ' . $et : '' }}</div>
+                                        <div class="card-title">{{ $activity->description }}</div>
+                                        <div class="card-meta">
+                                            <span><i class="fa-solid fa-user-tie"></i> PIC: {{ $activity->pics->pluck('name')->implode(', ') ?: '-' }}</span>
+                                            <span><i class="fa-solid fa-users"></i> Terlibat: {{ $activity->participants->pluck('name')->implode(', ') ?: '-' }}</span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endauth
                     </div>
                 </div>
 
