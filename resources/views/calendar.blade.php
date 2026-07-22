@@ -747,17 +747,34 @@
                         $gridEndMinutes = ($endHour + 1) * 60;
 
                         // Build [start, end] minute intervals (clipped to the visible grid)
-                        // for every timed activity of the day.
+                        // for every timed activity of the day. An activity whose end_time is
+                        // <= its start_time is treated as an overnight activity that rolls
+                        // into the next day (e.g. 20:00 -> 08:00); it's clipped to the bottom
+                        // of today's grid here, and CalendarController@index separately feeds
+                        // in a "continues_from_previous_day" copy that occupies the top of
+                        // the following day's grid down to its actual end_time.
                         $timedEvents = $timedActivities->map(function($act) use ($gridStartMinutes, $gridEndMinutes) {
-                            [$sh, $sm] = array_map('intval', explode(':', $act->start_time));
-                            $start = max($sh * 60 + $sm, $gridStartMinutes);
+                            $continuesFromPrevDay = $act->continues_from_previous_day ?? false;
 
-                            $end = $start + 60;
+                            [$sh, $sm] = array_map('intval', explode(':', $act->start_time));
+                            $rawStart = $sh * 60 + $sm;
+
+                            $rawEnd = $rawStart + 60;
                             if ($act->end_time) {
                                 [$eh, $em] = array_map('intval', explode(':', $act->end_time));
-                                $end = $eh * 60 + $em;
+                                $rawEnd = $eh * 60 + $em;
                             }
-                            $end = min(max($end, $start + 15), $gridEndMinutes);
+
+                            if ($continuesFromPrevDay) {
+                                $start = $gridStartMinutes;
+                                $end = min(max($rawEnd, $gridStartMinutes + 15), $gridEndMinutes);
+                            } elseif ($rawEnd <= $rawStart) {
+                                $start = max($rawStart, $gridStartMinutes);
+                                $end = $gridEndMinutes;
+                            } else {
+                                $start = max($rawStart, $gridStartMinutes);
+                                $end = min(max($rawEnd, $start + 15), $gridEndMinutes);
+                            }
 
                             return ['activity' => $act, 'start' => $start, 'end' => $end];
                         })->sortBy('start')->values();
@@ -1053,7 +1070,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="end_time">Jam Selesai <span class="text-muted">(Harus setelah jam mulai)</span></label>
+                        <label for="end_time">Jam Selesai <span class="text-muted">(Boleh keesokan hari, mis. kegiatan semalaman)</span></label>
                         <input type="time" id="end_time" name="end_time" list="time_suggestions">
                     </div>
 

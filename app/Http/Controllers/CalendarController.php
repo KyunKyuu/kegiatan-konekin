@@ -110,6 +110,29 @@ class CalendarController extends Controller
         $allDayActivities = $dayActivities->filter(fn($a) => is_null($a->start_time))->values();
         $timedActivities = $dayActivities->filter(fn($a) => !is_null($a->start_time))->sortBy('start_time')->values();
 
+        // Overnight activities (end_time <= start_time, e.g. 20:00 -> 08:00) that
+        // started yesterday and roll into today's view.
+        $prevDateStr = $activeDate->copy()->subDay()->format('Y-m-d');
+        $overnightQuery = Activity::with(['pics', 'participants', 'creator'])
+            ->whereDate('activity_date', $prevDateStr)
+            ->whereNotNull('start_time')
+            ->whereNotNull('end_time')
+            ->whereColumn('end_time', '<=', 'start_time');
+
+        if ($search) {
+            $overnightQuery->where('description', 'like', '%' . $search . '%');
+        }
+        if (!empty($selectedCategories) && is_array($selectedCategories)) {
+            $overnightQuery->whereIn('category', $selectedCategories);
+        }
+
+        $overnightFromYesterday = $overnightQuery->get();
+        foreach ($overnightFromYesterday as $activity) {
+            $activity->continues_from_previous_day = true;
+        }
+
+        $timedActivities = $timedActivities->concat($overnightFromYesterday)->sortBy('start_time')->values();
+
         return view('calendar', [
             'year' => $year,
             'month' => $month,
@@ -140,13 +163,13 @@ class CalendarController extends Controller
             'category' => 'required|string|max:255',
             'activity_date' => 'required|date',
             'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|required_with:start_time|date_format:H:i|after:start_time',
+            'end_time' => 'nullable|required_with:start_time|date_format:H:i',
             'description' => 'required|string',
             'pics' => 'required|array|min:1',
             'pics.*' => 'required|string|max:255',
             'participants' => 'nullable|array',
             'participants.*' => 'required|string|max:255',
-        ]);
+        ], $this->activityValidationMessages());
 
         try {
             DB::beginTransaction();
@@ -226,13 +249,13 @@ class CalendarController extends Controller
             'category' => 'required|string|max:255',
             'activity_date' => 'required|date',
             'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|required_with:start_time|date_format:H:i|after:start_time',
+            'end_time' => 'nullable|required_with:start_time|date_format:H:i',
             'description' => 'required|string',
             'pics' => 'required|array|min:1',
             'pics.*' => 'required|string|max:255',
             'participants' => 'nullable|array',
             'participants.*' => 'required|string|max:255',
-        ]);
+        ], $this->activityValidationMessages());
 
         try {
             DB::beginTransaction();
@@ -313,5 +336,29 @@ class CalendarController extends Controller
             return response()->json(['success' => true, 'message' => 'Kegiatan berhasil dihapus!']);
         }
         return redirect()->back()->with('success', 'Kegiatan berhasil dihapus!');
+    }
+
+    /**
+     * Custom Indonesian validation messages for the store/update rules.
+     *
+     * The app has no lang/ files published (APP_LOCALE and APP_FALLBACK_LOCALE
+     * are both "id" with no translations available), so unmapped rules render
+     * as raw keys like "validation.after" instead of a readable message.
+     */
+    private function activityValidationMessages(): array
+    {
+        return [
+            'category.required' => 'Kategori kegiatan wajib dipilih.',
+            'activity_date.required' => 'Tanggal kegiatan wajib diisi.',
+            'activity_date.date' => 'Tanggal kegiatan tidak valid.',
+            'start_time.date_format' => 'Format jam mulai tidak valid.',
+            'end_time.required_with' => 'Jam selesai wajib diisi jika jam mulai diisi.',
+            'end_time.date_format' => 'Format jam selesai tidak valid.',
+            'description.required' => 'Isi kegiatan wajib diisi.',
+            'pics.required' => 'Minimal harus ada 1 PIC kegiatan.',
+            'pics.min' => 'Minimal harus ada 1 PIC kegiatan.',
+            'pics.*.required' => 'Nama PIC tidak boleh kosong.',
+            'participants.*.required' => 'Nama peserta tidak boleh kosong.',
+        ];
     }
 }
