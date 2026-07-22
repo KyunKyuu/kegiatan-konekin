@@ -24,16 +24,28 @@ class AdminController extends Controller
         $lbYear = $request->input('lb_year');
 
         // Subquery select statements with dynamic date filtering
+        $isSqlite = DB::getDriverName() === 'sqlite';
         $picCountSql = 'SELECT COUNT(*) FROM activity_pic as apic JOIN activities as a ON apic.activity_id = a.id WHERE apic.person_id = p.id';
         $partCountSql = 'SELECT COUNT(*) FROM activity_participant as ap JOIN activities as a ON ap.activity_id = a.id WHERE ap.person_id = p.id';
 
+        $dateBindings = [];
         if ($lbMonth && $lbYear) {
-            $formattedMonth = str_pad($lbMonth, 2, '0', STR_PAD_LEFT);
-            $picCountSql .= " AND strftime('%m', a.activity_date) = '{$formattedMonth}' AND strftime('%Y', a.activity_date) = '{$lbYear}'";
-            $partCountSql .= " AND strftime('%m', a.activity_date) = '{$formattedMonth}' AND strftime('%Y', a.activity_date) = '{$lbYear}'";
+            if ($isSqlite) {
+                $dateFilter = " AND strftime('%m', a.activity_date) = ? AND strftime('%Y', a.activity_date) = ?";
+                $dateBindings = [str_pad($lbMonth, 2, '0', STR_PAD_LEFT), (string) (int) $lbYear];
+            } else {
+                $dateFilter = ' AND MONTH(a.activity_date) = ? AND YEAR(a.activity_date) = ?';
+                $dateBindings = [(int) $lbMonth, (int) $lbYear];
+            }
+            $picCountSql .= $dateFilter;
+            $partCountSql .= $dateFilter;
         } elseif ($lbYear) {
-            $picCountSql .= " AND strftime('%Y', a.activity_date) = '{$lbYear}'";
-            $partCountSql .= " AND strftime('%Y', a.activity_date) = '{$lbYear}'";
+            $dateFilter = $isSqlite
+                ? " AND strftime('%Y', a.activity_date) = ?"
+                : ' AND YEAR(a.activity_date) = ?';
+            $dateBindings = [$isSqlite ? (string) (int) $lbYear : (int) $lbYear];
+            $picCountSql .= $dateFilter;
+            $partCountSql .= $dateFilter;
         }
 
         // 2. Metrics
@@ -45,9 +57,9 @@ class AdminController extends Controller
         // Using SQL Subqueries for high performance
         $topPeople = DB::table('people as p')
             ->select('p.id', 'p.name')
-            ->selectRaw("({$picCountSql}) as pic_count")
-            ->selectRaw("({$partCountSql}) as participant_count")
-            ->selectRaw("({$picCountSql}) + ({$partCountSql}) as total_activities")
+            ->selectRaw("({$picCountSql}) as pic_count", $dateBindings)
+            ->selectRaw("({$partCountSql}) as participant_count", $dateBindings)
+            ->selectRaw("({$picCountSql}) + ({$partCountSql}) as total_activities", array_merge($dateBindings, $dateBindings))
             ->orderBy('total_activities', 'desc')
             ->limit(10)
             ->get();
@@ -60,9 +72,12 @@ class AdminController extends Controller
             ->orderBy('count', 'desc')
             ->get();
 
-        // 5. Monthly Trend of Activities (SQLite-compatible strftime)
+        // 5. Monthly Trend of Activities (driver-aware date formatting)
+        $monthKeyExpr = $isSqlite
+            ? "strftime('%Y-%m', activity_date)"
+            : "DATE_FORMAT(activity_date, '%Y-%m')";
         $monthlyTrendRaw = Activity::select(
-                DB::raw("strftime('%Y-%m', activity_date) as month_key"),
+                DB::raw("{$monthKeyExpr} as month_key"),
                 DB::raw('count(*) as count')
             )
             ->groupBy('month_key')
@@ -95,9 +110,9 @@ class AdminController extends Controller
         // 7. All People Table (with detail counts)
         $allPeople = DB::table('people as p')
             ->select('p.id', 'p.name', 'p.created_at')
-            ->selectRaw("({$picCountSql}) as pic_count")
-            ->selectRaw("({$partCountSql}) as participant_count")
-            ->selectRaw("({$picCountSql}) + ({$partCountSql}) as total_count")
+            ->selectRaw("({$picCountSql}) as pic_count", $dateBindings)
+            ->selectRaw("({$partCountSql}) as participant_count", $dateBindings)
+            ->selectRaw("({$picCountSql}) + ({$partCountSql}) as total_count", array_merge($dateBindings, $dateBindings))
             ->orderBy('total_count', 'desc')
             ->paginate(5, ['*'], 'members_page');
 
