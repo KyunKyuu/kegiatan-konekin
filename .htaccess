@@ -1,0 +1,29 @@
+# ==========================================================================
+#  Laravel di cPanel shared hosting (document root = public_html)
+#
+#  Seluruh isi repository di-checkout ke dalam public_html. File ini
+#  meneruskan SEMUA request ke folder public/ tanpa perlu mengubah
+#  document root. Karena semua request "dipaksa" masuk ke public/,
+#  file sensitif seperti .env, composer.json, folder app/, config/,
+#  vendor/, storage/ dsb TIDAK bisa diakses langsung dari browser
+#  (URL-nya diarahkan ke public/<path> yang tidak memuat file tersebut).
+# ==========================================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Biarkan validasi SSL (Let's Encrypt / cPanel AutoSSL) tetap berjalan.
+    RewriteRule ^\.well-known/ - [L]
+
+    # Teruskan semua request ke dalam folder public/.
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Lapisan pengaman tambahan (defense-in-depth) bila mod_rewrite tidak aktif.
+<FilesMatch "^\.(env.*|git.*)$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "^(composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml|\.cpanel\.yml|vite\.config\.js)$">
+    Require all denied
+</FilesMatch>
