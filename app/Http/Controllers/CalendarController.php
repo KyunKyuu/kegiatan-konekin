@@ -76,7 +76,10 @@ class CalendarController extends Controller
             $this->applyPersonFilter($activitiesQuery, $selectedPerson->id);
         }
 
-        $activities = $activitiesQuery->get()->groupBy(function($activity) {
+        // Order by start_time (all-day activities with a null start_time come
+        // first) instead of insertion order, so the month grid badges and the
+        // Agenda/list view both read chronologically.
+        $activities = $activitiesQuery->orderBy('start_time')->get()->groupBy(function($activity) {
             return $activity->activity_date->format('Y-m-d');
         });
 
