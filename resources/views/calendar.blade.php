@@ -517,7 +517,7 @@
                     <div class="categories-checkbox-list">
                         @foreach($allCategories as $cat)
                             <label class="checkbox-label">
-                                <input type="checkbox" name="categories[]" value="{{ $cat }}" 
+                                <input type="checkbox" name="categories[]" value="{{ $cat }}"
                                     {{ in_array($cat, $selectedCategories) ? 'checked' : '' }}
                                     onchange="this.form.submit()">
                                 <span class="custom-checkbox"></span>
@@ -528,7 +528,29 @@
                     </div>
                 </div>
 
-                @if($search || !empty($selectedCategories))
+                <div class="form-group relative">
+                    <label>Saring Berdasarkan Orang (PIC/Peserta)</label>
+
+                    @if($selectedPerson)
+                        <input type="hidden" name="person_id" value="{{ $selectedPerson->id }}">
+                        <div class="selected-tags-container">
+                            <div class="participant-chip">
+                                <span><i class="fa-solid fa-user"></i> {{ $selectedPerson->name }}</span>
+                                <button type="button" class="chip-remove" onclick="removePersonFilter()">&times;</button>
+                            </div>
+                        </div>
+                    @else
+                        <button type="button" class="btn btn-outline btn-block btn-sm" onclick="togglePersonFilterSearch()">
+                            <i class="fa-solid fa-magnifying-glass"></i> Pilih Orang...
+                        </button>
+                        <div id="personFilterSearchWrapper" class="input-wrapper" style="display:none; margin-top: 8px;">
+                            <input type="text" id="personFilterSearch" placeholder="Ketik nama & pilih..." autocomplete="off">
+                        </div>
+                        <ul id="personFilterSuggestions" class="autocomplete-list"></ul>
+                    @endif
+                </div>
+
+                @if($search || !empty($selectedCategories) || $selectedPerson)
                     <a href="{{ route('calendar', ['month' => $month, 'year' => $year, 'view' => $view, 'date' => $activeDateStr]) }}" class="btn btn-outline btn-block btn-sm">
                         <i class="fa-solid fa-rotate-left"></i> Atur Ulang Filter
                     </a>
@@ -600,19 +622,19 @@
                             $prevDay = $activeDate->copy()->subDay()->format('Y-m-d');
                             $nextDay = $activeDate->copy()->addDay()->format('Y-m-d');
                         @endphp
-                        <a href="{{ route('calendar', ['view' => 'day', 'date' => $prevDay, 'search' => $search, 'categories' => $selectedCategories]) }}" class="nav-btn" title="Hari Sebelumnya">
+                        <a href="{{ route('calendar', ['view' => 'day', 'date' => $prevDay, 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId]) }}" class="nav-btn" title="Hari Sebelumnya">
                             <i class="fa-solid fa-chevron-left"></i>
                         </a>
-                        <a href="{{ route('calendar', ['view' => 'day', 'date' => date('Y-m-d'), 'search' => $search, 'categories' => $selectedCategories]) }}" class="btn btn-outline btn-sm">Hari Ini</a>
-                        <a href="{{ route('calendar', ['view' => 'day', 'date' => $nextDay, 'search' => $search, 'categories' => $selectedCategories]) }}" class="nav-btn" title="Hari Berikutnya">
+                        <a href="{{ route('calendar', ['view' => 'day', 'date' => date('Y-m-d'), 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId]) }}" class="btn btn-outline btn-sm">Hari Ini</a>
+                        <a href="{{ route('calendar', ['view' => 'day', 'date' => $nextDay, 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId]) }}" class="nav-btn" title="Hari Berikutnya">
                             <i class="fa-solid fa-chevron-right"></i>
                         </a>
                     @else
-                        <a href="{{ route('calendar', ['view' => $view, 'month' => $month - 1, 'year' => $year, 'search' => $search, 'categories' => $selectedCategories, 'date' => $activeDateStr]) }}" class="nav-btn" title="Bulan Sebelumnya">
+                        <a href="{{ route('calendar', ['view' => $view, 'month' => $month - 1, 'year' => $year, 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId, 'date' => $activeDateStr]) }}" class="nav-btn" title="Bulan Sebelumnya">
                             <i class="fa-solid fa-chevron-left"></i>
                         </a>
-                        <a href="{{ route('calendar', ['view' => $view, 'month' => date('n'), 'year' => date('Y'), 'date' => date('Y-m-d'), 'search' => $search, 'categories' => $selectedCategories]) }}" class="btn btn-outline btn-sm">Hari Ini</a>
-                        <a href="{{ route('calendar', ['view' => $view, 'month' => $month + 1, 'year' => $year, 'search' => $search, 'categories' => $selectedCategories, 'date' => $activeDateStr]) }}" class="nav-btn" title="Bulan Berikutnya">
+                        <a href="{{ route('calendar', ['view' => $view, 'month' => date('n'), 'year' => date('Y'), 'date' => date('Y-m-d'), 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId]) }}" class="btn btn-outline btn-sm">Hari Ini</a>
+                        <a href="{{ route('calendar', ['view' => $view, 'month' => $month + 1, 'year' => $year, 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId, 'date' => $activeDateStr]) }}" class="nav-btn" title="Bulan Berikutnya">
                             <i class="fa-solid fa-chevron-right"></i>
                         </a>
                     @endif
@@ -624,13 +646,13 @@
                     <i class="fa-solid fa-filter"></i> Saring
                 </button>
                 <div class="view-toggle-buttons">
-                    <a href="{{ route('calendar', ['view' => 'month', 'date' => $activeDateStr, 'search' => $search, 'categories' => $selectedCategories]) }}" id="btn-month-view" class="toggle-btn {{ $view === 'month' ? 'active' : '' }}">
+                    <a href="{{ route('calendar', ['view' => 'month', 'date' => $activeDateStr, 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId]) }}" id="btn-month-view" class="toggle-btn {{ $view === 'month' ? 'active' : '' }}">
                         <i class="fa-solid fa-calendar-days"></i> Bulanan
                     </a>
-                    <a href="{{ route('calendar', ['view' => 'day', 'date' => $activeDateStr, 'search' => $search, 'categories' => $selectedCategories]) }}" id="btn-day-view" class="toggle-btn {{ $view === 'day' ? 'active' : '' }}">
+                    <a href="{{ route('calendar', ['view' => 'day', 'date' => $activeDateStr, 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId]) }}" id="btn-day-view" class="toggle-btn {{ $view === 'day' ? 'active' : '' }}">
                         <i class="fa-solid fa-calendar-day"></i> Harian
                     </a>
-                    <a href="{{ route('calendar', ['view' => 'list', 'date' => $activeDateStr, 'search' => $search, 'categories' => $selectedCategories]) }}" id="btn-list-view" class="toggle-btn {{ $view === 'list' ? 'active' : '' }}">
+                    <a href="{{ route('calendar', ['view' => 'list', 'date' => $activeDateStr, 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId]) }}" id="btn-list-view" class="toggle-btn {{ $view === 'list' ? 'active' : '' }}">
                         <i class="fa-solid fa-list-ul"></i> Agenda
                     </a>
                 </div>
@@ -681,7 +703,7 @@
                                  @auth data-date="{{ $day['formatted'] }}" onclick="handleCellClick(event, '{{ $day['formatted'] }}')" @endauth>
                                 
                                 <div class="day-number-wrapper">
-                                    <a href="{{ route('calendar', ['view' => 'day', 'date' => $day['formatted'], 'search' => $search, 'categories' => $selectedCategories]) }}" class="day-number" style="z-index: 10; cursor: pointer;">{{ $day['date']->day }}</a>
+                                    <a href="{{ route('calendar', ['view' => 'day', 'date' => $day['formatted'], 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId]) }}" class="day-number" style="z-index: 10; cursor: pointer;">{{ $day['date']->day }}</a>
                                 </div>
 
                                 <div class="day-activities-list">
@@ -892,7 +914,7 @@
                             <div class="agenda-day-group">
                                 <div class="agenda-day-header">
                                     <i class="fa-solid fa-calendar-day text-primary"></i> 
-                                    <a href="{{ route('calendar', ['view' => 'day', 'date' => $day['formatted'], 'search' => $search, 'categories' => $selectedCategories]) }}" style="color: inherit; font-weight: inherit;">
+                                    <a href="{{ route('calendar', ['view' => 'day', 'date' => $day['formatted'], 'search' => $search, 'categories' => $selectedCategories, 'person_id' => $personId]) }}" style="color: inherit; font-weight: inherit;">
                                         {{ $day['date']->translatedFormat('l, d F Y') }}
                                     </a>
                                     @if($day['is_today'])
@@ -1219,6 +1241,86 @@
         if (event.target.id === 'detailModal') {
             document.getElementById('detailModal').classList.remove('active');
         }
+    }
+
+    // ============================================
+    // PERSON FILTER (collapsed by default; click to reveal a search box
+    // instead of listing every person, so the sidebar doesn't get cluttered)
+    // ============================================
+    function personFilterDebounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    function togglePersonFilterSearch() {
+        const wrapper = document.getElementById('personFilterSearchWrapper');
+        if (!wrapper) return;
+        const showing = wrapper.style.display !== 'none';
+        wrapper.style.display = showing ? 'none' : 'block';
+        if (!showing) {
+            document.getElementById('personFilterSearch').focus();
+        } else {
+            document.getElementById('personFilterSuggestions').classList.remove('active');
+        }
+    }
+
+    function removePersonFilter() {
+        const form = document.querySelector('.filter-form');
+        const input = form.querySelector('input[name="person_id"]');
+        if (input) input.remove();
+        form.submit();
+    }
+
+    function selectPersonFilter(personId) {
+        const form = document.querySelector('.filter-form');
+        let input = form.querySelector('input[name="person_id"]');
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'person_id';
+            form.appendChild(input);
+        }
+        input.value = personId;
+        form.submit();
+    }
+
+    const personFilterSearchInput = document.getElementById('personFilterSearch');
+    if (personFilterSearchInput) {
+        const personFilterSuggestions = document.getElementById('personFilterSuggestions');
+
+        personFilterSearchInput.addEventListener('input', personFilterDebounce(function() {
+            const query = this.value.trim();
+            if (query.length < 1) {
+                personFilterSuggestions.innerHTML = '';
+                personFilterSuggestions.classList.remove('active');
+                return;
+            }
+            fetch(`/api/people/search?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(people => {
+                    personFilterSuggestions.innerHTML = '';
+                    if (people.length === 0) {
+                        personFilterSuggestions.classList.remove('active');
+                        return;
+                    }
+                    people.forEach(person => {
+                        const li = document.createElement('li');
+                        li.textContent = person.name;
+                        li.onclick = () => selectPersonFilter(person.id);
+                        personFilterSuggestions.appendChild(li);
+                    });
+                    personFilterSuggestions.classList.add('active');
+                });
+        }, 300));
+
+        document.addEventListener('click', function(e) {
+            if (e.target !== personFilterSearchInput) {
+                personFilterSuggestions.classList.remove('active');
+            }
+        });
     }
 
     @auth

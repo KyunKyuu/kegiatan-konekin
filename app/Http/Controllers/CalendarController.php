@@ -70,6 +70,12 @@ class CalendarController extends Controller
             $activitiesQuery->whereIn('category', $selectedCategories);
         }
 
+        $personId = $request->input('person_id');
+        $selectedPerson = $personId ? Person::find($personId) : null;
+        if ($selectedPerson) {
+            $this->applyPersonFilter($activitiesQuery, $selectedPerson->id);
+        }
+
         $activities = $activitiesQuery->get()->groupBy(function($activity) {
             return $activity->activity_date->format('Y-m-d');
         });
@@ -105,7 +111,10 @@ class CalendarController extends Controller
         if (!empty($selectedCategories) && is_array($selectedCategories)) {
             $dayActivitiesQuery->whereIn('category', $selectedCategories);
         }
-        
+        if ($selectedPerson) {
+            $this->applyPersonFilter($dayActivitiesQuery, $selectedPerson->id);
+        }
+
         $dayActivities = $dayActivitiesQuery->get();
         $allDayActivities = $dayActivities->filter(fn($a) => is_null($a->start_time))->values();
         $timedActivities = $dayActivities->filter(fn($a) => !is_null($a->start_time))->sortBy('start_time')->values();
@@ -125,6 +134,9 @@ class CalendarController extends Controller
         if (!empty($selectedCategories) && is_array($selectedCategories)) {
             $overnightQuery->whereIn('category', $selectedCategories);
         }
+        if ($selectedPerson) {
+            $this->applyPersonFilter($overnightQuery, $selectedPerson->id);
+        }
 
         $overnightFromYesterday = $overnightQuery->get();
         foreach ($overnightFromYesterday as $activity) {
@@ -142,12 +154,26 @@ class CalendarController extends Controller
             'categoryColors' => $categoryColors,
             'selectedCategories' => $selectedCategories,
             'search' => $search,
+            'personId' => $personId,
+            'selectedPerson' => $selectedPerson,
             'view' => $view,
             'activeDate' => $activeDate,
             'activeDateStr' => $activeDateStr,
             'allDayActivities' => $allDayActivities,
             'timedActivities' => $timedActivities,
         ]);
+    }
+
+    /**
+     * Restrict a query to activities where the given person is either a PIC
+     * or a participant.
+     */
+    private function applyPersonFilter($query, int $personId): void
+    {
+        $query->where(function ($q) use ($personId) {
+            $q->whereHas('pics', fn($q2) => $q2->where('people.id', $personId))
+              ->orWhereHas('participants', fn($q2) => $q2->where('people.id', $personId));
+        });
     }
 
     public function store(Request $request)
