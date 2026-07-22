@@ -1027,10 +1027,6 @@
     </div>
 </div>
 
-<!-- Hidden Delete Form -->
-<form id="deleteActivityForm" method="POST" style="display:none;">
-    @csrf
-</form>
 @endauth
 
 @endsection
@@ -1130,6 +1126,73 @@
     let selectedParticipants = [];
     let selectedPics = [];
 
+    // Toast notification (replaces full-page flash messages for AJAX actions)
+    function showToast(message, type = 'success') {
+        const existing = document.querySelector('.ajax-toast');
+        if (existing) existing.remove();
+
+        const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type === 'success' ? 'success' : 'error'} ajax-toast`;
+        toast.innerHTML = `
+            <i class="fa-solid ${icon}"></i>
+            <span>${message}</span>
+            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+        `;
+        const container = document.querySelector('.main-container');
+        container.insertBefore(toast, container.firstChild);
+        setTimeout(() => toast.remove(), 4000);
+    }
+
+    // Re-fetch the current calendar page and swap in just the grid/agenda content,
+    // so adding/editing/deleting an activity updates the view without a full reload.
+    async function refreshCalendarView() {
+        const response = await fetch(window.location.href, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const html = await response.text();
+        const newDoc = new DOMParser().parseFromString(html, 'text/html');
+        const newContent = newDoc.querySelector('.calendar-view-content');
+        const currentContent = document.querySelector('.calendar-view-content');
+        if (newContent && currentContent) {
+            currentContent.innerHTML = newContent.innerHTML;
+        }
+    }
+
+    // Submit Add/Edit form via AJAX instead of a normal page POST
+    activityForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(activityForm);
+        const originalBtnText = btnSaveActivity.innerText;
+        btnSaveActivity.disabled = true;
+        btnSaveActivity.innerText = 'Menyimpan...';
+
+        try {
+            const response = await fetch(activityForm.action, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body: formData,
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (response.ok) {
+                activityModal.classList.remove('active');
+                await refreshCalendarView();
+                showToast(data.message || 'Kegiatan berhasil disimpan!', 'success');
+            } else if (response.status === 422 && data.errors) {
+                const firstError = Object.values(data.errors)[0][0];
+                showToast(firstError, 'error');
+            } else {
+                showToast(data.message || 'Terjadi kesalahan, silakan coba lagi.', 'error');
+            }
+        } catch (err) {
+            showToast('Gagal terhubung ke server.', 'error');
+        } finally {
+            btnSaveActivity.disabled = false;
+            btnSaveActivity.innerText = originalBtnText;
+        }
+    });
+
     function openAddModal() {
         modalTitle.innerText = "Tambah Kegiatan Baru";
         activityForm.action = "{{ route('activities.store') }}";
@@ -1218,11 +1281,28 @@
         activityModal.classList.add('active');
     }
 
-    function deleteActivity(activityId) {
-        if (confirm("Apakah Anda yakin ingin menghapus kegiatan ini?")) {
-            const form = document.getElementById('deleteActivityForm');
-            form.action = `/activities/${activityId}/delete`;
-            form.submit();
+    async function deleteActivity(activityId) {
+        if (!confirm("Apakah Anda yakin ingin menghapus kegiatan ini?")) return;
+
+        try {
+            const response = await fetch(`/activities/${activityId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (response.ok) {
+                document.getElementById('detailModal').classList.remove('active');
+                await refreshCalendarView();
+                showToast(data.message || 'Kegiatan berhasil dihapus!', 'success');
+            } else {
+                showToast(data.message || 'Gagal menghapus kegiatan.', 'error');
+            }
+        } catch (err) {
+            showToast('Gagal terhubung ke server.', 'error');
         }
     }
 

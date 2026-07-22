@@ -130,6 +130,9 @@ class CalendarController extends Controller
     public function store(Request $request)
     {
         if (!Auth::check()) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Silakan login terlebih dahulu untuk menambah kegiatan.'], 401);
+            }
             return redirect()->route('login')->withErrors(['message' => 'Silakan login terlebih dahulu untuk menambah kegiatan.']);
         }
 
@@ -187,9 +190,15 @@ class CalendarController extends Controller
 
             DB::commit();
 
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Kegiatan berhasil ditambahkan!']);
+            }
             return redirect()->back()->with('success', 'Kegiatan berhasil ditambahkan!');
         } catch (\Exception $e) {
             DB::rollBack();
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menambahkan kegiatan: ' . $e->getMessage()], 500);
+            }
             return redirect()->back()->withErrors(['error' => 'Gagal menambahkan kegiatan: ' . $e->getMessage()]);
         }
     }
@@ -197,6 +206,9 @@ class CalendarController extends Controller
     public function update(Request $request, $id)
     {
         if (!Auth::check()) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Silakan login terlebih dahulu.'], 401);
+            }
             return redirect()->route('login');
         }
 
@@ -204,6 +216,9 @@ class CalendarController extends Controller
 
         // Allow only creator or admin to edit
         if (Auth::id() !== $activity->user_id && !Auth::user()->is_admin) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses untuk mengubah kegiatan ini.'], 403);
+            }
             return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk mengubah kegiatan ini.']);
         }
 
@@ -260,16 +275,25 @@ class CalendarController extends Controller
 
             DB::commit();
 
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Kegiatan berhasil diperbarui!']);
+            }
             return redirect()->back()->with('success', 'Kegiatan berhasil diperbarui!');
         } catch (\Exception $e) {
             DB::rollBack();
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal memperbarui kegiatan: ' . $e->getMessage()], 500);
+            }
             return redirect()->back()->withErrors(['error' => 'Gagal memperbarui kegiatan: ' . $e->getMessage()]);
         }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         if (!Auth::check()) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Silakan login terlebih dahulu.'], 401);
+            }
             return redirect()->route('login');
         }
 
@@ -277,11 +301,17 @@ class CalendarController extends Controller
 
         // Allow only creator or admin to delete
         if (Auth::id() !== $activity->user_id && !Auth::user()->is_admin) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses untuk menghapus kegiatan ini.'], 403);
+            }
             return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk menghapus kegiatan ini.']);
         }
 
         $activity->delete();
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Kegiatan berhasil dihapus!']);
+        }
         return redirect()->back()->with('success', 'Kegiatan berhasil dihapus!');
     }
 }
