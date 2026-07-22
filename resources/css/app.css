@@ -1502,6 +1502,13 @@ label {
     .header-actions {
         width: 100%;
         justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .user-profile {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        row-gap: 6px;
     }
     
     .calendar-header-controls {
@@ -1512,6 +1519,24 @@ label {
     
     .row-2 {
         grid-template-columns: 1fr;
+    }
+}
+
+/* On very narrow screens the user-profile pill + Logout button can still be
+   too wide to fit on one line; trim them down instead of letting body's
+   overflow-x: hidden clip them. */
+@media (max-width: 480px) {
+    .user-role {
+        display: none;
+    }
+
+    .user-profile {
+        padding: 6px;
+        gap: 8px;
+    }
+
+    .btn-logout span {
+        display: none;
     }
 }
 
