@@ -1,142 +1,105 @@
-# 🚀 Panduan Deploy ke cPanel (Auto Deploy dari Branch `main`)
+# 🚀 Deployment — Jadwal Kegiatan → daily.konekin.space (Hostinger hPanel)
 
-Aplikasi **Jadwal Kegiatan** (Laravel 13, PHP 8.3+, MySQL) di shared hosting cPanel,
-dengan **document root = `public_html`** dan **auto-deploy dari branch `main`** memakai
-fitur **Git Version Control** cPanel.
+Aplikasi ini di-deploy ke **Hostinger shared hosting (hPanel)**, domain
+**`daily.konekin.space`**, dengan **auto-deploy dari branch `main` via GitHub Actions**.
 
-Semua file pendukung sudah disiapkan di repo:
+## Kenapa bukan fitur Git bawaan hPanel?
+
+hPanel punya fitur Git sendiri (Websites → Manage → Advanced → Git), tapi setelah
+dicoba & dicek langsung di server, ada 2 keterbatasan yang membuatnya tidak cukup:
+- **Tidak ada Node.js di server** → `npm run build` (Tailwind/Vite) tidak bisa jalan,
+  padahal aplikasi ini butuh build asset.
+- Tidak menjalankan `artisan migrate`, `config:cache`, dll secara otomatis.
+
+Karena itu, deployment sepenuhnya ditangani oleh **GitHub Actions**
+(`.github/workflows/deploy.yml`), yang membangun asset di runner Actions (ada PHP & Node)
+lalu meng-upload hasilnya ke server via SSH/rsync.
+
+## Alur
+
+```
+git push origin main
+        │
+        ▼
+GitHub Actions runner:
+  composer install --no-dev  (PHP 8.3)
+  npm ci && npm run build    (Node 20)
+        │
+        ▼
+rsync seluruh project → server (SSH) → domains/daily.konekin.space/public_html
+        │
+        ▼
+SSH ke server, jalankan:
+  artisan migrate --force
+  artisan storage:link
+  artisan config:cache / route:cache / view:cache
+        │
+        ▼
+Situs langsung update di https://daily.konekin.space
+```
+
+## Info server (untuk referensi)
+
+| Item | Nilai |
+|---|---|
+| Host | `153.92.9.176` |
+| Port SSH | `65002` |
+| Username | `u385356168` |
+| Path aplikasi | `/home/u385356168/domains/daily.konekin.space/public_html` |
+| PHP server | 8.4.11 (Composer di Actions pakai 8.3 agar konsisten dgn `composer.json`) |
+| Node di server | **tidak ada** — build selalu di GitHub Actions, bukan di server |
+
+## Struktur yang sudah disiapkan
 
 | File | Fungsi |
 |---|---|
-| `.htaccess` (root) | Meneruskan semua request ke folder `public/` tanpa mengubah document root, sekaligus memblokir akses ke file sensitif (`.env`, `vendor/`, dll). |
-| `.cpanel.yml` | Script deploy otomatis: `composer install` → `npm build` → `migrate` → cache. |
-| `.env.production.example` | Template `.env` untuk produksi (MySQL, `APP_DEBUG=false`). |
+| `.github/workflows/deploy.yml` | Workflow CI/CD: build (composer+npm) → rsync → migrate & cache via SSH. Jalan otomatis tiap push ke `main`. |
+| `.htaccess` (root) | Meneruskan semua request ke folder `public/` tanpa perlu ubah document root, sekaligus blokir akses ke file sensitif. |
+| `.env.production.example` | Referensi/cadangan isi `.env` production (file `.env` asli sudah ada langsung di server, tidak ikut git). |
 
----
+## GitHub Secrets yang dipakai
 
-## Ringkasan Alur
+Hanya **satu** secret yang wajib ada di repo (Settings → Secrets and variables → Actions):
+- `SSH_PRIVATE_KEY` — private key khusus deploy (sudah ditambahkan).
 
-```
-git push origin main  ──►  cPanel menerima commit  ──►  jalankan .cpanel.yml
-                                                         (composer, npm, migrate, cache)
-                                                         ──►  situs live di public_html
-```
+Host/port/username/path sengaja ditulis langsung di `deploy.yml` (bukan secret) karena
+tanpa private key yang cocok, info itu saja tidak berguna untuk siapa pun.
 
----
+## Database
 
-## Langkah Setup (sekali di awal)
+Database MySQL dibuat manual sekali lewat **hPanel → Databases → MySQL Databases**
+(shared hosting tidak mengizinkan pembuatan DB baru lewat SSH/CLI, hanya lewat panel).
+Setelah dibuat, kredensialnya diisi ke `.env` di server (`DB_DATABASE`, `DB_USERNAME`,
+`DB_PASSWORD`).
 
-### 1. Buat Database MySQL di cPanel
-1. cPanel → **MySQL® Database Wizard**.
-2. Buat database (mis. `jadwal`) → cPanel jadikan `namaakun_jadwal`.
-3. Buat user DB + password kuat → cPanel jadikan `namaakun_dbuser`.
-4. Beri user tersebut **ALL PRIVILEGES** pada database.
-5. Catat: **nama DB, username, password** → dipakai di `.env`.
+## Setelah deploy pertama sukses
 
-### 2. Pastikan Versi PHP 8.3+
-cPanel → **MultiPHP Manager** → pilih domain → set ke **PHP 8.3** (atau lebih baru).
-> Wajib. Laravel 13 & composer butuh PHP ≥ 8.3.
-
-### 3. Hubungkan Git Version Control
-cPanel → **Git™ Version Control** → **Create**.
-
-Ada 2 pola auto-deploy — pilih salah satu:
-
-**Pola A — Push langsung ke repo cPanel (paling sederhana):**
-1. Isi **Repository Path**: `public_html` (kosongkan dulu folder ini bila ada file bawaan).
-2. Setelah dibuat, cPanel memberi **Clone URL** (SSH), contoh:
-   `ssh://namaakun@server:port/home/namaakun/public_html`
-3. Di komputer lokal, tambahkan sebagai remote lalu push:
-   ```bash
-   git remote add cpanel ssh://namaakun@server:port/home/namaakun/public_html
-   git push cpanel main
-   ```
-   Setiap `git push cpanel main` akan otomatis menjalankan `.cpanel.yml`.
-
-**Pola B — Pull dari GitHub/GitLab:**
-1. **Clone a Repository** → isi **Clone URL** repo GitHub Anda + Repository Path `public_html`.
-2. Setiap ada update: buka menu repo → tab **Pull or Deploy** → **Update from Remote** →
-   lalu **Deploy HEAD Commit** (menjalankan `.cpanel.yml`).
-   > Agar benar-benar otomatis saat push ke GitHub, tambahkan **webhook** GitHub yang
-   > memanggil endpoint update cPanel, atau jadwalkan **cron** yang menjalankan
-   > `cd ~/public_html && git pull && /usr/local/cpanel/bin/... ` (opsional/lanjutan).
-
-> **Catatan:** file `.env` di-ignore git, jadi TIDAK akan tertimpa/terhapus saat deploy.
-
-### 4. Buat File `.env` di Server
-1. cPanel → **File Manager** → masuk `public_html`.
-2. Salin `.env.production.example` menjadi `.env`.
-3. Edit `.env`:
-   - `APP_URL=https://domain-anda.com`
-   - Isi `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` (dari langkah 1).
-   - `APP_KEY` — lihat langkah 5.
-
-### 5. Generate `APP_KEY`
-**Jika cPanel punya Terminal / akses SSH:**
+Jalankan seeder **sekali saja** untuk data awal + akun admin:
 ```bash
-cd ~/public_html
-php artisan key:generate --force
-```
-**Jika tidak ada Terminal:** generate lokal di komputer Anda —
-```bash
-php artisan key:generate --show
-```
-lalu salin hasilnya (`base64:...`) ke `APP_KEY=` di `.env` server.
-
-### 6. Deploy Pertama
-- **Pola A:** cukup `git push cpanel main` — `.cpanel.yml` langsung jalan.
-- **Pola B:** menu repo → **Update from Remote** → **Deploy HEAD Commit**.
-
-`.cpanel.yml` akan otomatis: `composer install` → `npm run build` → `migrate` →
-`storage:link` → cache config/route/view.
-
-### 7. Isi Data Awal + Akun Admin (sekali saja)
-Migrasi hanya membuat tabel kosong. Untuk membuat akun admin + data contoh, jalankan
-seeder **satu kali** via Terminal/SSH:
-```bash
-cd ~/public_html
+ssh -p 65002 u385356168@153.92.9.176
+cd domains/daily.konekin.space/public_html
 php artisan db:seed --force
 ```
-Akun default yang dibuat:
+Akun default:
 - **Admin:** `admin@example.com` / `password`
 - **User:** `user@example.com` / `password`
 
-> ⚠️ **Segera ganti password admin** setelah login pertama (lewat menu User di aplikasi).
-> Jika hanya ingin akun admin tanpa 45 data contoh, buat user manual via `php artisan tinker`
-> alih-alih menjalankan seeder penuh.
+⚠️ **Ganti password admin setelah login pertama.**
 
----
+## Troubleshooting
 
-## ✅ Checklist "Tinggal Pakai"
-- [ ] Database MySQL dibuat + privileges diberikan
-- [ ] MultiPHP = 8.3+
-- [ ] Git Version Control terhubung, Repository Path = `public_html`
-- [ ] File `.env` dibuat di server (DB terisi, `APP_DEBUG=false`, `APP_URL` benar)
-- [ ] `APP_KEY` terisi
-- [ ] Deploy pertama sukses (cek log deploy di cPanel)
-- [ ] `php artisan db:seed --force` (data awal + admin)
-- [ ] AutoSSL aktif → set `SESSION_SECURE_COOKIE=true` di `.env` lalu redeploy
-- [ ] Password admin diganti
+**Actions gagal di step SSH/rsync**
+- Cek `SSH_PRIVATE_KEY` di GitHub Secrets sudah benar (termasuk baris BEGIN/END).
+- Cek public key masih terdaftar di hPanel → SSH Access → SSH Keys.
 
----
+**500 / halaman blank setelah deploy**
+- Cek `storage/logs/laravel.log` di server.
+- Pastikan `.env` di server sudah lengkap (`DB_*` terisi, bukan `__PENDING__`).
 
-## 🔧 Troubleshooting
+**Aset CSS/JS tidak update**
+- Cek log job "Install & build frontend assets" di tab Actions GitHub — pastikan
+  `npm run build` sukses sebelum rsync jalan.
 
-**500 / halaman blank**
-- Cek `storage/logs/laravel.log` (via File Manager).
-- Pastikan `.env` ada & `APP_KEY` terisi.
-- Pastikan folder `storage/` dan `bootstrap/cache/` writable (permission `755`/`775`).
-
-**`composer` atau `php` versi salah saat deploy**
-- Edit `.cpanel.yml`, ganti `php`/`composer` dengan path eksplisit PHP 8.3, contoh:
-  `/opt/cpanel/ea-php83/root/usr/bin/php /opt/cpanel/composer/bin/composer install ...`
-
-**Perubahan `.env` tidak berpengaruh**
-- Config di-cache. Jalankan ulang deploy, atau via Terminal:
-  `php artisan config:clear && php artisan config:cache`.
-
-**Gambar dari upload tidak muncul**
-- Pastikan `php artisan storage:link` sukses (dijalankan otomatis oleh `.cpanel.yml`).
-
-**Aset CSS/JS tidak muncul (tampilan berantakan)**
-- Pastikan `npm run build` sukses saat deploy (cek log). Folder `public/build` harus terisi.
+**Perubahan migrasi tidak masuk**
+- Cek log step "Post-deploy" di Actions — `artisan migrate --force` harus sukses
+  tanpa error di sana.
