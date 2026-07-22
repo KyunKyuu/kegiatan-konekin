@@ -29,7 +29,7 @@
         <div class="header-container">
             <a href="{{ route('calendar') }}" class="app-logo">
                 <i class="fa-regular fa-calendar-days logo-icon"></i>
-                <span class="logo-text">Jadwal<span>Kegiatan</span></span>
+                <span class="logo-text">Jadwal<span>Kegiatan</span> Konekin</span>
             </a>
             
             <nav class="nav-menu">
@@ -98,7 +98,7 @@
     <!-- Footer -->
     <footer class="app-footer">
         <div class="footer-container">
-            <p>&copy; 2026 JadwalKegiatan Inc. Dibuat dengan <i class="fa-solid fa-heart text-danger"></i> untuk pair programming.</p>
+            <p>&copy; 2026 JadwalKegiatan Inc. Dibuat dengan <i class="fa-solid fa-heart text-danger"></i> oleh prbw.</p>
         </div>
     </footer>
 
