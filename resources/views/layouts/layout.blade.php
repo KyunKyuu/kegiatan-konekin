@@ -36,6 +36,9 @@
                 <a href="{{ route('calendar') }}" class="nav-link {{ Route::currentRouteName() === 'calendar' ? 'active' : '' }}">
                     <i class="fa-solid fa-calendar-alt"></i> Kalender
                 </a>
+                <a href="{{ route('monitoring.index') }}" class="nav-link {{ Route::currentRouteName() === 'monitoring.index' ? 'active' : '' }}">
+                    <i class="fa-solid fa-ruler-combined"></i> Monitoring
+                </a>
                 @auth
                     @if(Auth::user()->is_admin)
                         <a href="{{ route('admin.dashboard') }}" class="nav-link {{ Route::currentRouteName() === 'admin.dashboard' ? 'active' : '' }}">
