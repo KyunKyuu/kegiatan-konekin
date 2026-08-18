@@ -3072,11 +3072,386 @@ label {
     gap: 0.35rem;
 }
 
+/* Multi Notes Header */
 .note-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+}
+
+/* ==========================================================================
+   FULL-PAGE PERSON DETAIL & SLATE DARK THEME STYLING (LAPANG & SLEEK)
+   ========================================================================== */
+
+.person-fullpage-container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem 1rem;
+}
+
+.person-fullpage-nav {
+    padding: 1.25rem 1.75rem;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.person-circle-avatar-lg {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border: 2px solid #60a5fa;
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+}
+
+.person-circle-avatar-md {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border: 2px solid #60a5fa;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.person-name-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: -0.01em;
+}
+
+.person-fullpage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (max-width: 992px) {
+    .person-fullpage-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.person-grid-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.person-card-section {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 1.75rem;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+}
+
+.section-header-title .title-text {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.section-header-title .subtitle-text {
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.icon-accent {
+    color: #38bdf8;
+}
+
+/* TARGET POST CARDS (POST FORMAT - LOCKED ONCE COMPLETED) */
+.target-posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.target-post-card {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.target-post-card.active-pending {
+    border-left: 4px solid #38bdf8;
+}
+
+.target-post-card.locked-done {
+    background: #090d16;
+    border-color: rgba(16, 185, 129, 0.3);
+    border-left: 4px solid #10b981;
+    opacity: 0.9;
+}
+
+.target-post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.target-post-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    letter-spacing: 0.04em;
+}
+
+.target-post-badge.badge-pending {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.target-post-badge.badge-locked {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.target-post-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.btn-locked-done {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+    cursor: not-allowed;
+    font-weight: 700;
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+}
+
+/* MULTI NOTES POSTS */
+.multi-notes-posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.note-post-card {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+}
+
+.note-category-pill {
+    background: #0369a1;
+    color: #e0f2fe;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+}
+
+.note-status-badge {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+}
+
+.note-post-content {
+    color: #e2e8f0;
+    line-height: 1.5;
+}
+
+/* CALENDAR ACTIVITIES POSTS */
+.calendar-activities-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.activity-post-card {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+}
+
+.activity-category-tag {
+    background: #0284c7;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+}
+
+/* SCALE BOXES & SLIDERS */
+.scale-box-row {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 0.85rem 1.1rem;
+}
+
+.scale-title-text {
+    color: #f1f5f9;
+}
+
+.scale-number-badge {
+    background: #0284c7;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.85rem;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scale-slider-track {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.35rem;
+}
+
+.custom-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: #334155;
+    outline: none;
+}
+
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #38bdf8;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+    transition: transform 0.15s ease;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+}
+
+/* HISTORY TIMELINE */
+.history-timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.history-timeline-card {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-left: 3px solid #38bdf8;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+}
+
+.history-scale-tag {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #38bdf8;
+}
+
+.history-value-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.empty-box-message {
+    padding: 1.5rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+/* POPUP PERSON LIST GROUP */
+.people-pop-list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+.pop-person-item-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.pop-person-item-card:hover {
+    background: #334155;
+    border-color: #38bdf8;
+    transform: translateX(4px);
+}
+
+.pop-person-item-card .person-name {
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+.team-person-item-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.team-person-item-link:hover {
+    background: #1e293b;
+    border-color: #38bdf8;
+    transform: translateX(3px);
 }
 
 .note-cat-badge {

@@ -12,6 +12,7 @@ Route::get('/', [CalendarController::class, 'index'])->name('calendar');
 
 // Monitoring Module View (Public view, protected actions)
 Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
+Route::get('/monitoring/people/{id}', [MonitoringController::class, 'showPersonDetail'])->name('monitoring.people.show');
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

@@ -34,6 +34,86 @@ class MonitoringController extends Controller
     }
 
     /**
+     * Display the full-page person detail page.
+     */
+    public function showPersonDetail($id)
+    {
+        $person = Person::with([
+            'profile',
+            'milestones',
+            'picActivities',
+            'involvedActivities',
+            'assignedTargets',
+            'scaleHistories.user',
+            'notes.user'
+        ])->findOrFail($id);
+
+        if (!$person->profile) {
+            $person->profile()->create([
+                'catatan_akademik' => 'Aktif',
+                'catatan_keuangan' => 'Lunas',
+                'skala_sales' => 3,
+                'skala_katim' => 3,
+                'skala_keaktifan' => 4,
+                'skala_prioritas' => 3,
+                'cara_aktif' => 'Selalu hadir tepat waktu dan aktif dalam diskusi tim.',
+            ]);
+            $person->load('profile');
+        }
+
+        // Auto seed default assigned targets if empty
+        if ($person->assignedTargets->isEmpty()) {
+            PersonTarget::create([
+                'person_id' => $person->id,
+                'title' => '++PZ',
+                'is_completed' => true,
+                'completed_at' => now(),
+            ]);
+            PersonTarget::create([
+                'person_id' => $person->id,
+                'title' => '++01',
+                'is_completed' => false,
+            ]);
+            $person->load('assignedTargets');
+        }
+
+        // Auto seed initial notes if empty
+        if ($person->notes->isEmpty()) {
+            PersonNote::create([
+                'person_id' => $person->id,
+                'category' => 'Akademik',
+                'status_label' => 'Aktif',
+                'note' => 'Mahasiswa aktif semester ini.',
+                'created_by' => Auth::id(),
+            ]);
+            PersonNote::create([
+                'person_id' => $person->id,
+                'category' => 'Keuangan',
+                'status_label' => 'Lunas',
+                'note' => 'Pembayaran SPP dan administrasi lunas.',
+                'created_by' => Auth::id(),
+            ]);
+            $person->load('notes');
+        }
+
+        // Filter out activities where this person is the PIC (User instruction: "yang jadi PIC di acara, jangan ada di daftar")
+        $nonPicActivities = $person->involvedActivities
+            ->reject(function ($act) use ($person) {
+                return $act->pic_person_id == $person->id;
+            })
+            ->unique('id')
+            ->values();
+
+        $masterTargets = MasterTarget::orderBy('title')->get();
+
+        return view('monitoring.show_person', compact(
+            'person',
+            'nonPicActivities',
+            'masterTargets'
+        ));
+    }
+
+    /**
      * Store a new capstone or sub capstone objective.
      */
     public function store(Request $request)
@@ -151,50 +231,21 @@ class MonitoringController extends Controller
             $person->load('profile');
         }
 
-        // Auto seed default assigned targets if empty
-        if ($person->assignedTargets->isEmpty()) {
-            PersonTarget::create([
-                'person_id' => $person->id,
-                'title' => '++PZ',
-                'is_completed' => true,
-                'completed_at' => now(),
-            ]);
-            PersonTarget::create([
-                'person_id' => $person->id,
-                'title' => '++01',
-                'is_completed' => false,
-            ]);
-            $person->load('assignedTargets');
-        }
+        // Filter out activities where person is PIC
+        $nonPicActivities = $person->involvedActivities
+            ->reject(function ($act) use ($person) {
+                return $act->pic_person_id == $person->id;
+            })
+            ->unique('id')
+            ->values();
 
-        // Auto seed initial notes if empty
-        if ($person->notes->isEmpty()) {
-            PersonNote::create([
-                'person_id' => $person->id,
-                'category' => 'Akademik',
-                'status_label' => 'Aktif',
-                'note' => 'Mahasiswa aktif semester ini.',
-                'created_by' => Auth::id(),
-            ]);
-            PersonNote::create([
-                'person_id' => $person->id,
-                'category' => 'Keuangan',
-                'status_label' => 'Lunas',
-                'note' => 'Pembayaran SPP dan administrasi lunas.',
-                'created_by' => Auth::id(),
-            ]);
-            $person->load('notes');
-        }
-
-        // Merge activities from calendar
-        $calendarActivities = $person->picActivities->merge($person->involvedActivities)->unique('id')->values();
         $masterTargets = MasterTarget::orderBy('title')->get();
 
         return response()->json([
             'person' => $person,
             'profile' => $person->profile,
             'milestones' => $person->milestones,
-            'calendar_activities' => $calendarActivities,
+            'calendar_activities' => $nonPicActivities,
             'assigned_targets' => $person->assignedTargets,
             'scale_histories' => $person->scaleHistories,
             'notes' => $person->notes,
@@ -252,23 +303,34 @@ class MonitoringController extends Controller
             ]
         );
 
-        return redirect()->route('monitoring.index')->with('success', 'Profil dan histori skala ' . $person->name . ' berhasil diperbarui!');
+        return redirect()->back()->with('success', 'Profil dan histori skala ' . $person->name . ' berhasil diperbarui!');
     }
 
     /**
      * Toggle completion status of an assigned person target.
+     * Once checked/completed, it is LOCKED (non-fillable / non-toggleable).
      */
     public function togglePersonTarget($targetId)
     {
         $target = PersonTarget::findOrFail($targetId);
-        $target->is_completed = !$target->is_completed;
-        $target->completed_at = $target->is_completed ? now() : null;
+        
+        if ($target->is_completed) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Target yang sudah di-ceklis telah terkunci (non-fillable).',
+                'is_completed' => true,
+                'completed_at' => $target->completed_at ? $target->completed_at->format('d M Y H:i') : null,
+            ]);
+        }
+
+        $target->is_completed = true;
+        $target->completed_at = now();
         $target->save();
 
         return response()->json([
             'success' => true,
-            'is_completed' => $target->is_completed,
-            'completed_at' => $target->completed_at ? $target->completed_at->format('d M Y H:i') : null,
+            'is_completed' => true,
+            'completed_at' => $target->completed_at->format('d M Y H:i'),
         ]);
     }
 
@@ -303,7 +365,7 @@ class MonitoringController extends Controller
             'title' => $title,
         ]);
 
-        return redirect()->route('monitoring.index')->with('success', 'Target berhasil ditambahkan ke ' . $person->name);
+        return redirect()->back()->with('success', 'Target berhasil ditambahkan ke ' . $person->name);
     }
 
     /**
@@ -318,7 +380,7 @@ class MonitoringController extends Controller
 
         MasterTarget::create($validated);
 
-        return redirect()->route('monitoring.index')->with('success', 'Master Target baru berhasil dibuat!');
+        return redirect()->back()->with('success', 'Master Target baru berhasil dibuat!');
     }
 
     /**
@@ -329,7 +391,7 @@ class MonitoringController extends Controller
         $master = MasterTarget::findOrFail($id);
         $master->delete();
 
-        return redirect()->route('monitoring.index')->with('success', 'Master Target berhasil dihapus!');
+        return redirect()->back()->with('success', 'Master Target berhasil dihapus!');
     }
 
     /**
@@ -353,7 +415,7 @@ class MonitoringController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        return redirect()->route('monitoring.index')->with('success', 'Catatan baru berhasil ditambahkan!');
+        return redirect()->back()->with('success', 'Catatan baru berhasil ditambahkan!');
     }
 
     /**
@@ -364,7 +426,7 @@ class MonitoringController extends Controller
         $note = PersonNote::findOrFail($id);
         $note->delete();
 
-        return redirect()->route('monitoring.index')->with('success', 'Catatan berhasil dihapus!');
+        return redirect()->back()->with('success', 'Catatan berhasil dihapus!');
     }
 
     /**
