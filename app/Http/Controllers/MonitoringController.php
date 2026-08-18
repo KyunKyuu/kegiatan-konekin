@@ -106,11 +106,37 @@ class MonitoringController extends Controller
 
         $masterTargets = MasterTarget::orderBy('title')->get();
 
+        $allMilestones = Milestone::with('subMilestones')
+            ->whereNull('parent_id')
+            ->orderBy('order')
+            ->get();
+
         return view('monitoring.show_person', compact(
             'person',
             'nonPicActivities',
-            'masterTargets'
+            'masterTargets',
+            'allMilestones'
         ));
+    }
+
+    /**
+     * Move a person to a new Milestone / Sub-Milestone step.
+     */
+    public function movePersonMilestone(Request $request, $id)
+    {
+        $person = Person::findOrFail($id);
+
+        $validated = $request->validate([
+            'milestone_id' => 'nullable|exists:milestones,id',
+        ]);
+
+        if (!empty($validated['milestone_id'])) {
+            $person->milestones()->sync([$validated['milestone_id']]);
+        } else {
+            $person->milestones()->detach();
+        }
+
+        return redirect()->back()->with('success', 'Posisi Milestone/Step ' . $person->name . ' berhasil diperbarui!');
     }
 
     /**

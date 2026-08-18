@@ -36,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/monitoring/milestones/{id}/delete', [MonitoringController::class, 'destroy'])->name('monitoring.milestones.destroy');
     Route::post('/monitoring/milestones/{id}/assign-people', [MonitoringController::class, 'assignPeople'])->name('monitoring.milestones.assign_people');
     Route::post('/monitoring/people/{id}/profile', [MonitoringController::class, 'updatePersonProfile'])->name('monitoring.people.profile.update');
+    Route::post('/monitoring/people/{id}/move-milestone', [MonitoringController::class, 'movePersonMilestone'])->name('monitoring.people.move_milestone');
     
     // Target Checklist & Master Targets
     Route::post('/monitoring/targets/{id}/toggle', [MonitoringController::class, 'togglePersonTarget'])->name('monitoring.targets.toggle');

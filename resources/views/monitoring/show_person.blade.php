@@ -19,6 +19,56 @@
                 </div>
             </div>
         </div>
+    <!-- Milestone Objective Progression & Step Selection Card -->
+    <div class="person-card-section glass-panel mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+            <div>
+                <h3 class="title-text mb-1"><i class="fa-solid fa-flag-checkered icon-accent"></i> Posisi Milestone & Alur Step Progress</h3>
+                <p class="subtitle-text text-muted mb-0">Pantau posisi milestone {{ $person->name }} dan pindahkan ke step berikutnya (misal: Sub 2.3 &rarr; Sub 2.4 / Capstone 3).</p>
+            </div>
+            @auth
+                @if(Auth::user()->is_admin)
+                    <!-- Move Milestone Form -->
+                    <form action="{{ route('monitoring.people.move_milestone', $person->id) }}" method="POST" class="d-flex align-items-center gap-2">
+                        @csrf
+                        <select name="milestone_id" class="form-control text-xs custom-select-dark" style="min-width: 260px;">
+                            <option value="">-- Belum Di-assign Milestone --</option>
+                            @foreach($allMilestones as $mIndex => $mMain)
+                                <option value="{{ $mMain->id }}" {{ $person->milestones->contains('id', $mMain->id) ? 'selected' : '' }}>
+                                    Capstone #{{ $mIndex + 1 }}: {{ $mMain->title }}
+                                </option>
+                                @foreach($mMain->subMilestones as $sIndex => $mSub)
+                                    <option value="{{ $mSub->id }}" {{ $person->milestones->contains('id', $mSub->id) ? 'selected' : '' }}>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&rarr; Sub {{ $mIndex + 1 }}.{{ $sIndex + 1 }}: {{ $mSub->title }}
+                                    </option>
+                                @endforeach
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-xs"><i class="fa-solid fa-arrow-right-to-bracket"></i> Pindah Step</button>
+                    </form>
+                @endif
+            @endauth
+        </div>
+
+        <!-- Step Visual Pills Progress -->
+        <div class="milestone-steps-track">
+            @php $currentMilestone = $person->milestones->first(); @endphp
+            @foreach($allMilestones as $mIndex => $mMain)
+                @php $isMainActive = $currentMilestone && $currentMilestone->id == $mMain->id; @endphp
+                <div class="step-pill {{ $isMainActive ? 'active' : '' }}">
+                    <span class="step-num">#{{ $mIndex + 1 }}</span>
+                    <span class="step-name">{{ $mMain->title }}</span>
+                </div>
+
+                @foreach($mMain->subMilestones as $sIndex => $mSub)
+                    @php $isSubActive = $currentMilestone && $currentMilestone->id == $mSub->id; @endphp
+                    <div class="step-pill sub-step {{ $isSubActive ? 'active' : '' }}">
+                        <span class="step-num">{{ $mIndex + 1 }}.{{ $sIndex + 1 }}</span>
+                        <span class="step-name">{{ $mSub->title }}</span>
+                    </div>
+                @endforeach
+            @endforeach
+        </div>
     </div>
 
     <!-- Main Full-Page 2-Column Content Grid -->

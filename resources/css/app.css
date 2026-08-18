@@ -1971,7 +1971,7 @@ label {
 .literal-ruler-scroll-area {
     width: 100%;
     overflow-x: auto;
-    padding: 6rem 2rem 4rem 2rem;
+    padding: 12rem 2.5rem 5.5rem 2.5rem;
     scroll-behavior: smooth;
 }
 
@@ -3080,46 +3080,46 @@ label {
 }
 
 /* ==========================================================================
-   FULL-PAGE PERSON DETAIL & SLATE DARK THEME STYLING (LAPANG & SLEEK)
+   FULL-PAGE PERSON DETAIL & SLATE DARK THEME STYLING (LAPANG, PLONG & SLEEK)
    ========================================================================== */
 
 .person-fullpage-container {
-    max-width: 1320px;
+    max-width: 1440px;
     margin: 0 auto;
-    padding: 1.5rem 1rem 4rem 1rem;
+    padding: 2rem 2rem 5rem 2rem;
 }
 
 .person-fullpage-nav {
-    padding: 1.25rem 1.75rem;
+    padding: 1.5rem 2rem;
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    border-radius: 18px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
 }
 
 .person-circle-avatar-lg {
-    width: 48px;
-    height: 48px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     border: 2px solid #60a5fa;
     color: #fff;
-    font-size: 1.15rem;
+    font-size: 1.25rem;
     font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.45);
 }
 
 .person-circle-avatar-md {
-    width: 38px;
-    height: 38px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     border: 2px solid #60a5fa;
     color: #fff;
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 800;
     display: flex;
     align-items: center;
@@ -3127,7 +3127,7 @@ label {
 }
 
 .person-name-title {
-    font-size: 1.5rem;
+    font-size: 1.65rem;
     font-weight: 800;
     color: #f8fafc;
     letter-spacing: -0.01em;
@@ -3136,7 +3136,7 @@ label {
 .person-fullpage-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    gap: 2.5rem;
     align-items: start;
 }
 
@@ -3149,15 +3149,101 @@ label {
 .person-grid-col {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 2.5rem;
 }
 
 .person-card-section {
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    padding: 1.75rem;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    border-radius: 20px;
+    padding: 2.25rem;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* MILESTONE OBJECTIVE PROGRESSION TRACK */
+.milestone-steps-track {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding: 0.75rem 0.25rem;
+    margin-top: 0.5rem;
+    scroll-behavior: smooth;
+}
+
+.milestone-steps-track::-webkit-scrollbar {
+    height: 6px;
+}
+
+.milestone-steps-track::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.step-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    white-space: nowrap;
+    transition: all 0.25s ease;
+    opacity: 0.65;
+}
+
+.step-pill.sub-step {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    background: rgba(30, 41, 59, 0.7);
+}
+
+.step-pill .step-num {
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+}
+
+.step-pill .step-name {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.step-pill.active {
+    opacity: 1;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    border-color: #38bdf8;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    transform: scale(1.05);
+}
+
+.step-pill.active .step-num {
+    background: #38bdf8;
+    color: #0f172a;
+}
+
+.step-pill.active .step-name {
+    color: #fff;
+    font-weight: 800;
+}
+
+.custom-select-dark {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+}
+
+.custom-select-dark:focus {
+    background: #0f172a;
+    border-color: #38bdf8;
+    color: #fff;
 }
 
 .section-header-title .title-text {
