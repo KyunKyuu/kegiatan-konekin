@@ -1,19 +1,19 @@
 @extends('layouts.layout')
 
-@section('title', 'Monitoring Capstone & Milestone - Jadwal Kegiatan Konekin')
+@section('title', 'Monitoring Capstone Objective - Jadwal Kegiatan Konekin')
 
 @section('content')
-<div class="monitoring-container">
+<div class="monitoring-container full-page-monitoring">
 
-    <!-- Page Header & Stats Dashboard -->
+    <!-- Page Header & Action Bar -->
     <div class="monitoring-header glass-panel">
         <div class="monitoring-header-main">
             <div>
                 <h1 class="monitoring-title">
-                    <i class="fa-solid fa-ruler-combined text-primary-glow"></i> Monitoring Capstone & Timeline
+                    <i class="fa-solid fa-ruler-combined text-primary-glow"></i> Monitoring Capstone Objective
                 </h1>
                 <p class="monitoring-subtitle text-muted">
-                    Visualisasi milestone dan sub-capstone proyek bergaya ruler timeline presisi
+                    Visualisasi ruler timeline permanen se-halaman untuk Capstone Utama & Sub Capstone
                 </p>
             </div>
             <div class="monitoring-header-actions">
@@ -32,61 +32,15 @@
                 @endauth
             </div>
         </div>
-
-        <!-- Quick Summary Stats -->
-        <div class="monitoring-stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon theme-purple"><i class="fa-solid fa-flag"></i></div>
-                <div class="stat-info">
-                    <span class="stat-label">Capstone Utama</span>
-                    <span class="stat-value">{{ $totalMain }}</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon theme-blue"><i class="fa-solid fa-list-check"></i></div>
-                <div class="stat-info">
-                    <span class="stat-label">Sub Capstone</span>
-                    <span class="stat-value">{{ $totalSub }}</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon theme-green"><i class="fa-solid fa-circle-check"></i></div>
-                <div class="stat-info">
-                    <span class="stat-label">Milestone Selesai</span>
-                    <span class="stat-value">{{ $completedCount }}</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon theme-cyan"><i class="fa-solid fa-chart-pie"></i></div>
-                <div class="stat-info">
-                    <span class="stat-label">Progress Total</span>
-                    <span class="stat-value">{{ $progressPercent }}%</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filter & Toolbar -->
-    <div class="monitoring-toolbar glass-panel">
-        <div class="filter-group">
-            <span class="filter-label"><i class="fa-solid fa-filter"></i> Filter Status:</span>
-            <a href="{{ route('monitoring.index') }}" class="btn-filter {{ !$statusFilter ? 'active' : '' }}">Semua</a>
-            <a href="{{ route('monitoring.index', ['status' => 'pending']) }}" class="btn-filter {{ $statusFilter === 'pending' ? 'active' : '' }}">Pending</a>
-            <a href="{{ route('monitoring.index', ['status' => 'in_progress']) }}" class="btn-filter {{ $statusFilter === 'in_progress' ? 'active' : '' }}">In Progress</a>
-            <a href="{{ route('monitoring.index', ['status' => 'completed']) }}" class="btn-filter {{ $statusFilter === 'completed' ? 'active' : '' }}">Selesai</a>
-        </div>
-        <div class="ruler-hint text-muted text-sm">
-            <i class="fa-solid fa-circle-info"></i> Klik avatar lingkaran ("bulet-bulet") untuk detail target, histori skala, & multi-catatan
-        </div>
     </div>
 
     <!-- =========================================================================
-         RULER TIMELINE COMPONENT ("ALA ALA PENGGARIS")
+         FULL-PAGE HERO RULER TIMELINE ("ALA ALA PENGGARIS")
          ========================================================================= -->
-    <div class="ruler-wrapper glass-panel">
+    <div class="ruler-wrapper glass-panel ruler-hero-panel">
         <div class="ruler-header">
             <div class="ruler-title">
-                <i class="fa-solid fa-sliders"></i> Ruler Capstone Timeline
+                <i class="fa-solid fa-sliders"></i> Full-Page Timeline Ruler
             </div>
             <div class="ruler-legend">
                 <span class="legend-item"><span class="legend-tick major"></span> Capstone Utama (Major Tick)</span>
@@ -99,7 +53,7 @@
             @if($mainMilestones->isEmpty())
                 <div class="ruler-empty-state">
                     <i class="fa-solid fa-ruler-horizontal empty-icon"></i>
-                    <p>Belum ada capstone yang ditambahkan.</p>
+                    <p>Belum ada Capstone Objective yang ditambahkan.</p>
                     @auth
                         @if(Auth::user()->is_admin)
                             <button class="btn btn-primary btn-sm" onclick="openCreateModal(null)">
@@ -110,10 +64,10 @@
                 </div>
             @else
                 <div class="ruler-track">
-                    <!-- Main Baseline Ruler Line -->
+                    <!-- Continuous Horizontal Baseline Ruler Line -->
                     <div class="ruler-main-line"></div>
 
-                    <!-- Render Main Capstones & Sub Capstones along the ruler -->
+                    <!-- Render Main Capstones & Sub Capstones along the full-width ruler -->
                     <div class="ruler-milestones-flex">
                         @foreach($mainMilestones as $mainIndex => $main)
                             <div class="ruler-segment {{ $main->color }}" data-id="{{ $main->id }}">
@@ -122,30 +76,38 @@
                                 <div class="ruler-tick-item major-tick" onclick="showMilestoneDetail({{ json_encode($main) }})">
                                     <div class="ruler-tick-mark major"></div>
                                     <div class="ruler-tick-header">
-                                        <span class="ruler-capstone-num">#{{ $mainIndex + 1 }}</span>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="ruler-capstone-num">#{{ $mainIndex + 1 }}</span>
+                                            @auth
+                                                @if(Auth::user()->is_admin)
+                                                    <span class="btn-icon btn-xs" onclick="event.stopPropagation(); openEditModal({{ json_encode($main) }})" title="Edit Capstone">
+                                                        <i class="fa-solid fa-pen"></i>
+                                                    </span>
+                                                @endif
+                                            @endauth
+                                        </div>
                                         <span class="ruler-capstone-title">{{ $main->title }}</span>
-                                        @if($main->target_date)
-                                            <span class="ruler-date-badge"><i class="fa-regular fa-clock"></i> {{ $main->target_date->format('d M') }}</span>
+                                        @if($main->description)
+                                            <span class="ruler-capstone-desc text-muted text-xs">{{ Str::limit($main->description, 45) }}</span>
                                         @endif
-                                        <span class="ruler-status-badge status-{{ $main->status }}">{{ ucfirst(str_replace('_', ' ', $main->status)) }}</span>
                                     </div>
                                     
-                                    <!-- Avatar circles under Major Tick -->
+                                    <!-- Avatar circles under Major Tick ("bulet-bulet") -->
                                     <div class="ruler-avatar-group">
-                                        @foreach($main->people->take(4) as $person)
+                                        @foreach($main->people->take(5) as $person)
                                             <span class="person-circle-avatar" 
                                                   title="Klik untuk detail {{ $person->name }}" 
                                                   onclick="event.stopPropagation(); openPersonDetailModal({{ $person->id }})">
                                                 {{ strtoupper(substr($person->name, 0, 2)) }}
                                             </span>
                                         @endforeach
-                                        @if($main->people->count() > 4)
-                                            <span class="person-circle-avatar more-avatar" title="{{ $main->people->count() - 4 }} orang lainnya" onclick="event.stopPropagation(); showMilestoneDetail({{ json_encode($main) }})">
-                                                +{{ $main->people->count() - 4 }}
+                                        @if($main->people->count() > 5)
+                                            <span class="person-circle-avatar more-avatar" title="{{ $main->people->count() - 5 }} orang lainnya" onclick="event.stopPropagation(); showMilestoneDetail({{ json_encode($main) }})">
+                                                +{{ $main->people->count() - 5 }}
                                             </span>
                                         @endif
                                         @if($main->people->isEmpty())
-                                            <span class="no-person-indicator text-muted" title="Belum ada penanggung jawab">-</span>
+                                            <span class="no-person-indicator text-muted text-xs" title="Belum ada penanggung jawab">-</span>
                                         @endif
                                     </div>
                                 </div>
@@ -158,23 +120,20 @@
                                             <div class="ruler-sub-header">
                                                 <span class="ruler-sub-num">{{ $mainIndex + 1 }}.{{ $subIndex + 1 }}</span>
                                                 <span class="ruler-sub-title" title="{{ $sub->title }}">{{ $sub->title }}</span>
-                                                @if($sub->target_date)
-                                                    <span class="ruler-sub-date">{{ $sub->target_date->format('d/m') }}</span>
-                                                @endif
                                             </div>
 
-                                            <!-- Avatar circles under Minor Tick -->
+                                            <!-- Avatar circles under Minor Tick ("bulet-bulet") -->
                                             <div class="ruler-avatar-group minor-group">
-                                                @foreach($sub->people->take(3) as $subPerson)
+                                                @foreach($sub->people->take(4) as $subPerson)
                                                     <span class="person-circle-avatar mini-avatar" 
                                                           title="Klik untuk detail {{ $subPerson->name }}" 
                                                           onclick="event.stopPropagation(); openPersonDetailModal({{ $subPerson->id }})">
                                                         {{ strtoupper(substr($subPerson->name, 0, 2)) }}
                                                     </span>
                                                 @endforeach
-                                                @if($sub->people->count() > 3)
-                                                    <span class="person-circle-avatar mini-avatar more-avatar" title="{{ $sub->people->count() - 3 }} orang lainnya">
-                                                        +{{ $sub->people->count() - 3 }}
+                                                @if($sub->people->count() > 4)
+                                                    <span class="person-circle-avatar mini-avatar more-avatar" title="{{ $sub->people->count() - 4 }} orang lainnya">
+                                                        +{{ $sub->people->count() - 4 }}
                                                     </span>
                                                 @endif
                                             </div>
@@ -195,158 +154,6 @@
                     </div>
                 </div>
             @endif
-        </div>
-    </div>
-
-    <!-- =========================================================================
-         CAPSTONE CARDS DETAILED LIST
-         ========================================================================= -->
-    <div class="monitoring-details-section">
-        <h2 class="section-title"><i class="fa-solid fa-layer-group"></i> Detail Capstone Utama & Sub Milestone</h2>
-        
-        <div class="capstone-cards-grid">
-            @foreach($mainMilestones as $mainIndex => $main)
-                @php
-                    $subCount = $main->subMilestones->count();
-                    $subCompleted = $main->subMilestones->where('status', 'completed')->count();
-                    $mainProgress = $subCount > 0 ? round(($subCompleted / $subCount) * 100) : ($main->status === 'completed' ? 100 : 0);
-                @endphp
-                <div class="capstone-card glass-panel {{ $main->color }}">
-                    <!-- Card Header -->
-                    <div class="capstone-card-header">
-                        <div class="capstone-card-title-group">
-                            <span class="capstone-badge">Capstone #{{ $mainIndex + 1 }}</span>
-                            <h3 class="capstone-card-title">{{ $main->title }}</h3>
-                        </div>
-                        <div class="capstone-card-status">
-                            <span class="ruler-status-badge status-{{ $main->status }}">
-                                {{ ucfirst(str_replace('_', ' ', $main->status)) }}
-                            </span>
-                            @auth
-                                @if(Auth::user()->is_admin)
-                                    <div class="dropdown-actions">
-                                        <button class="btn-icon" onclick="openEditModal({{ json_encode($main) }})" title="Edit Capstone">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
-                                        <form action="{{ route('monitoring.milestones.destroy', $main->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus capstone utama ini beserta semua sub capstone-nya?')">
-                                            @csrf
-                                            <button type="submit" class="btn-icon btn-icon-danger" title="Hapus Capstone">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                @endif
-                            @endauth
-                        </div>
-                    </div>
-
-                    @if($main->description)
-                        <p class="capstone-card-desc text-muted">{{ $main->description }}</p>
-                    @endif
-
-                    <!-- Target Date & Progress Bar -->
-                    <div class="capstone-card-meta">
-                        <div class="meta-item text-muted">
-                            <i class="fa-regular fa-calendar text-primary-glow"></i>
-                            Target: {{ $main->target_date ? $main->target_date->format('d M Y') : 'Belum ditentukan' }}
-                        </div>
-                        <div class="capstone-progress-container">
-                            <div class="progress-info">
-                                <span>Progress Sub-Task</span>
-                                <span>{{ $mainProgress }}% ({{ $subCompleted }}/{{ $subCount }})</span>
-                            </div>
-                            <div class="progress-bar-bg">
-                                <div class="progress-bar-fill" style="width: {{ $mainProgress }}%;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Assigned People Section ("Bulet-Bulet") -->
-                    <div class="capstone-people-section">
-                        <div class="people-section-header">
-                            <span class="people-title"><i class="fa-solid fa-users"></i> Penanggung Jawab Utama</span>
-                            @auth
-                                @if(Auth::user()->is_admin)
-                                    <button class="btn-text-action" onclick="openAssignPeopleModal({{ $main->id }}, {{ json_encode($main->people->pluck('id')) }})">
-                                        <i class="fa-solid fa-user-plus"></i> Kelola Orang
-                                    </button>
-                                @endif
-                            @endauth
-                        </div>
-                        <div class="people-avatars-list">
-                            @forelse($main->people as $person)
-                                <div class="person-chip" title="Klik untuk detail {{ $person->name }}" onclick="openPersonDetailModal({{ $person->id }})">
-                                    <span class="person-chip-avatar">{{ strtoupper(substr($person->name, 0, 2)) }}</span>
-                                    <span class="person-chip-name">{{ $person->name }}</span>
-                                </div>
-                            @empty
-                                <span class="text-muted text-sm italic">Belum ada orang yang dialokasikan</span>
-                            @endforelse
-                        </div>
-                    </div>
-
-                    <!-- Sub Capstone Accordion / List -->
-                    <div class="sub-capstones-wrapper">
-                        <div class="sub-header-bar">
-                            <h4><i class="fa-solid fa-diagram-project"></i> Sub Capstone ({{ $subCount }})</h4>
-                            @auth
-                                @if(Auth::user()->is_admin)
-                                    <button class="btn btn-outline btn-xs" onclick="openCreateModal({{ $main->id }})">
-                                        <i class="fa-solid fa-plus"></i> Tambah Sub
-                                    </button>
-                                @endif
-                            @endauth
-                        </div>
-
-                        <div class="sub-capstones-list">
-                            @forelse($main->subMilestones as $subIndex => $sub)
-                                <div class="sub-capstone-item">
-                                    <div class="sub-item-left">
-                                        <span class="sub-num-badge">{{ $mainIndex + 1 }}.{{ $subIndex + 1 }}</span>
-                                        <div class="sub-item-info">
-                                            <span class="sub-item-title">{{ $sub->title }}</span>
-                                            @if($sub->target_date)
-                                                <span class="sub-item-date text-muted"><i class="fa-regular fa-clock"></i> {{ $sub->target_date->format('d M Y') }}</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div class="sub-item-right">
-                                        <!-- Assigned people to sub -->
-                                        <div class="sub-people-avatars">
-                                            @foreach($sub->people->take(3) as $subPerson)
-                                                <span class="person-circle-avatar mini-avatar" title="Klik untuk detail {{ $subPerson->name }}" onclick="openPersonDetailModal({{ $subPerson->id }})">
-                                                    {{ strtoupper(substr($subPerson->name, 0, 2)) }}
-                                                </span>
-                                            @endforeach
-                                        </div>
-                                        <span class="ruler-status-badge status-{{ $sub->status }}">
-                                            {{ ucfirst(str_replace('_', ' ', $sub->status)) }}
-                                        </span>
-                                        @auth
-                                            @if(Auth::user()->is_admin)
-                                                <button class="btn-icon btn-xs" onclick="openEditModal({{ json_encode($sub) }})" title="Edit Sub">
-                                                    <i class="fa-solid fa-pen"></i>
-                                                </button>
-                                                <form action="{{ route('monitoring.milestones.destroy', $sub->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus sub capstone ini?')">
-                                                    @csrf
-                                                    <button type="submit" class="btn-icon btn-icon-danger btn-xs" title="Hapus">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        @endauth
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="empty-sub-item text-muted text-sm">
-                                    Belum ada sub capstone. Klik <strong>+ Tambah Sub</strong> untuk menambahkan.
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
-
-                </div>
-            @endforeach
         </div>
     </div>
 
@@ -654,7 +461,7 @@
 <div class="modal-backdrop" id="milestoneModalBackdrop" style="display: none;">
     <div class="modal-content glass-panel">
         <div class="modal-header">
-            <h3 id="modalTitle"><i class="fa-solid fa-flag"></i> Tambah Capstone Baru</h3>
+            <h3 id="modalTitle"><i class="fa-solid fa-flag"></i> Tambah Capstone Utama</h3>
             <button class="btn-close" onclick="closeMilestoneModal()">&times;</button>
         </div>
         
@@ -673,28 +480,13 @@
             </div>
 
             <div class="form-group">
-                <label for="milestoneTitle">Judul Milestone / Capstone <span class="text-danger">*</span></label>
+                <label for="milestoneTitle">Judul Capstone / Sub Objective <span class="text-danger">*</span></label>
                 <input type="text" id="milestoneTitle" name="title" class="form-control" placeholder="Contoh: Perancangan Arsitektur Database" required>
             </div>
 
             <div class="form-group">
                 <label for="milestoneDescription">Deskripsi Tambahan</label>
-                <textarea id="milestoneDescription" name="description" class="form-control" rows="3" placeholder="Jelaskan detail tugas atau pencapaian milestone..."></textarea>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group col-6">
-                    <label for="milestoneTargetDate">Target Tanggal Selesai</label>
-                    <input type="date" id="milestoneTargetDate" name="target_date" class="form-control">
-                </div>
-                <div class="form-group col-6">
-                    <label for="milestoneStatus">Status</label>
-                    <select id="milestoneStatus" name="status" class="form-control">
-                        <option value="pending">Pending</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed / Selesai</option>
-                    </select>
-                </div>
+                <textarea id="milestoneDescription" name="description" class="form-control" rows="3" placeholder="Jelaskan rincian objective ini..."></textarea>
             </div>
 
             <div class="form-group">
@@ -760,62 +552,28 @@
 <div class="modal-backdrop" id="detailModalBackdrop" style="display: none;">
     <div class="modal-content glass-panel modal-sm">
         <div class="modal-header">
-            <h3 id="detailTitle"><i class="fa-solid fa-circle-info"></i> Detail Milestone</h3>
+            <h3 id="detailTitle"><i class="fa-solid fa-circle-info"></i> Detail Capstone Objective</h3>
             <button class="btn-close" onclick="closeDetailModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="detail-badge-group mb-3">
-                <span id="detailStatusBadge" class="ruler-status-badge"></span>
-                <span id="detailDateBadge" class="ruler-date-badge"></span>
-            </div>
             <p id="detailDescription" class="text-muted mb-3"></p>
             <div class="detail-people-box">
-                <h4 class="text-sm font-semibold mb-2"><i class="fa-solid fa-users"></i> Penanggung Jawab:</h4>
+                <h4 class="text-sm font-semibold mb-2"><i class="fa-solid fa-users"></i> Penanggung Jawab ("Bulet-bulet"):</h4>
                 <div id="detailPeopleList" class="people-avatars-list"></div>
             </div>
         </div>
         <div class="modal-footer">
             @auth
                 @if(Auth::user()->is_admin)
-                    <button id="btnEditFromDetail" class="btn btn-primary btn-sm"><i class="fa-solid fa-pen"></i> Edit Milestone</button>
+                    <button id="btnEditFromDetail" class="btn btn-primary btn-sm"><i class="fa-solid fa-pen"></i> Edit Capstone</button>
+                    <form id="deleteMilestoneFormFromDetail" method="POST" action="" class="d-inline" onsubmit="return confirm('Hapus capstone ini?')">
+                        @csrf
+                        <button type="submit" class="btn btn-outline btn-icon-danger btn-sm"><i class="fa-solid fa-trash"></i> Hapus</button>
+                    </form>
                 @endif
             @endauth
             <button type="button" class="btn btn-outline btn-sm" onclick="closeDetailModal()">Tutup</button>
         </div>
-    </div>
-</div>
-
-<!-- =========================================================================
-     MODAL QUICK ASSIGN PEOPLE
-     ========================================================================= -->
-<div class="modal-backdrop" id="assignModalBackdrop" style="display: none;">
-    <div class="modal-content glass-panel modal-sm">
-        <div class="modal-header">
-            <h3><i class="fa-solid fa-user-plus"></i> Kelola Penanggung Jawab</h3>
-            <button class="btn-close" onclick="closeAssignModal()">&times;</button>
-        </div>
-        <form id="assignPeopleForm" method="POST">
-            @csrf
-            <div class="form-group">
-                <label>Pilih Orang dari Database Kalender:</label>
-                <div class="people-select-box" style="max-height: 200px; overflow-y: auto;">
-                    @foreach($allPeople as $person)
-                        <label class="people-checkbox-item">
-                            <input type="checkbox" name="people[]" value="{{ $person->id }}" class="assign-person-checkbox">
-                            <span>{{ $person->name }}</span>
-                        </label>
-                    @endforeach
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="assignNewPeople">Atau Ketik Nama Baru (Pisah koma):</label>
-                <input type="text" id="assignNewPeople" name="new_people" class="form-control" placeholder="Nama Baru 1, Nama Baru 2">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline btn-sm" onclick="closeAssignModal()">Batal</button>
-                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i> Simpan Orang</button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -1034,8 +792,6 @@
         document.getElementById('milestoneParentId').value = parentId ? parentId : '';
         document.getElementById('milestoneTitle').value = '';
         document.getElementById('milestoneDescription').value = '';
-        document.getElementById('milestoneTargetDate').value = '';
-        document.getElementById('milestoneStatus').value = 'pending';
         document.getElementById('newPeopleInput').value = '';
         
         document.querySelectorAll('.person-checkbox-input').forEach(cb => cb.checked = false);
@@ -1047,12 +803,10 @@
         const updateUrl = "{{ route('monitoring.milestones.update', ':id') }}".replace(':id', milestone.id);
         document.getElementById('milestoneForm').action = updateUrl;
         document.getElementById('milestoneId').value = milestone.id;
-        document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit Capstone / Sub Milestone';
+        document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit Capstone Objective';
         document.getElementById('milestoneParentId').value = milestone.parent_id ? milestone.parent_id : '';
         document.getElementById('milestoneTitle').value = milestone.title || '';
         document.getElementById('milestoneDescription').value = milestone.description || '';
-        document.getElementById('milestoneTargetDate').value = milestone.target_date ? milestone.target_date.substring(0, 10) : '';
-        document.getElementById('milestoneStatus').value = milestone.status || 'pending';
         document.getElementById('newPeopleInput').value = '';
 
         if (milestone.color) {
@@ -1075,13 +829,6 @@
     function showMilestoneDetail(milestone) {
         document.getElementById('detailTitle').textContent = milestone.title;
         document.getElementById('detailDescription').textContent = milestone.description || 'Tidak ada deskripsi.';
-        
-        const statusBadge = document.getElementById('detailStatusBadge');
-        statusBadge.className = 'ruler-status-badge status-' + milestone.status;
-        statusBadge.textContent = milestone.status.replace('_', ' ').toUpperCase();
-
-        const dateBadge = document.getElementById('detailDateBadge');
-        dateBadge.textContent = milestone.target_date ? 'Target: ' + milestone.target_date.substring(0, 10) : 'Tanpa Target Tanggal';
 
         const peopleList = document.getElementById('detailPeopleList');
         peopleList.innerHTML = '';
@@ -1108,26 +855,16 @@
             };
         }
 
+        const deleteForm = document.getElementById('deleteMilestoneFormFromDetail');
+        if (deleteForm) {
+            deleteForm.action = "{{ route('monitoring.milestones.destroy', ':id') }}".replace(':id', milestone.id);
+        }
+
         document.getElementById('detailModalBackdrop').style.display = 'flex';
     }
 
     function closeDetailModal() {
         document.getElementById('detailModalBackdrop').style.display = 'none';
-    }
-
-    function openAssignPeopleModal(milestoneId, assignedIds = []) {
-        const form = document.getElementById('assignPeopleForm');
-        form.action = "{{ route('monitoring.milestones.assign_people', ':id') }}".replace(':id', milestoneId);
-        
-        document.querySelectorAll('.assign-person-checkbox').forEach(cb => {
-            cb.checked = assignedIds.includes(parseInt(cb.value));
-        });
-        document.getElementById('assignNewPeople').value = '';
-        document.getElementById('assignModalBackdrop').style.display = 'flex';
-    }
-
-    function closeAssignModal() {
-        document.getElementById('assignModalBackdrop').style.display = 'none';
     }
 
     // Close modals on click backdrop

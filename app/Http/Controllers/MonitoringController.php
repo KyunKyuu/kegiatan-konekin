@@ -14,57 +14,33 @@ use Illuminate\Support\Facades\Auth;
 class MonitoringController extends Controller
 {
     /**
-     * Display the ruler timeline and capstone monitoring dashboard.
+     * Display the full-page ruler timeline for capstone objectives.
      */
     public function index(Request $request)
     {
-        $statusFilter = $request->input('status');
-
-        $query = Milestone::with(['subMilestones.people', 'people', 'creator'])
+        $mainMilestones = Milestone::with(['subMilestones.people', 'people', 'creator'])
             ->whereNull('parent_id')
             ->orderBy('order')
-            ->orderBy('target_date', 'asc');
+            ->get();
 
-        if ($statusFilter && in_array($statusFilter, ['pending', 'in_progress', 'completed'])) {
-            $query->where('status', $statusFilter);
-        }
-
-        $mainMilestones = $query->get();
         $allPeople = Person::orderBy('name')->get();
         $masterTargets = MasterTarget::orderBy('title')->get();
-
-        // Calculate stats
-        $totalMain = Milestone::whereNull('parent_id')->count();
-        $totalSub = Milestone::whereNotNull('parent_id')->count();
-        $completedMain = Milestone::whereNull('parent_id')->where('status', 'completed')->count();
-        $completedSub = Milestone::whereNotNull('parent_id')->where('status', 'completed')->count();
-        
-        $totalCount = $totalMain + $totalSub;
-        $completedCount = $completedMain + $completedSub;
-        $progressPercent = $totalCount > 0 ? round(($completedCount / $totalCount) * 100) : 0;
 
         return view('monitoring.index', compact(
             'mainMilestones',
             'allPeople',
-            'masterTargets',
-            'totalMain',
-            'totalSub',
-            'completedCount',
-            'progressPercent',
-            'statusFilter'
+            'masterTargets'
         ));
     }
 
     /**
-     * Store a new capstone or sub capstone.
+     * Store a new capstone or sub capstone objective.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'target_date' => 'nullable|date',
-            'status' => 'required|in:pending,in_progress,completed',
             'color' => 'required|string|max:50',
             'parent_id' => 'nullable|exists:milestones,id',
             'people' => 'nullable|array',
@@ -77,8 +53,6 @@ class MonitoringController extends Controller
             'parent_id' => $validated['parent_id'] ?? null,
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
-            'target_date' => $validated['target_date'] ?? null,
-            'status' => $validated['status'],
             'color' => $validated['color'],
             'order' => $maxOrder + 1,
             'created_by' => Auth::id(),
@@ -93,7 +67,7 @@ class MonitoringController extends Controller
     }
 
     /**
-     * Update an existing milestone.
+     * Update an existing milestone objective.
      */
     public function update(Request $request, $id)
     {
@@ -102,8 +76,6 @@ class MonitoringController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'target_date' => 'nullable|date',
-            'status' => 'required|in:pending,in_progress,completed',
             'color' => 'required|string|max:50',
             'parent_id' => 'nullable|exists:milestones,id',
             'people' => 'nullable|array',
@@ -118,8 +90,6 @@ class MonitoringController extends Controller
             'parent_id' => $validated['parent_id'] ?? null,
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
-            'target_date' => $validated['target_date'] ?? null,
-            'status' => $validated['status'],
             'color' => $validated['color'],
         ]);
 
@@ -130,7 +100,7 @@ class MonitoringController extends Controller
     }
 
     /**
-     * Remove the specified milestone.
+     * Remove the specified milestone objective.
      */
     public function destroy($id)
     {
@@ -329,8 +299,8 @@ class MonitoringController extends Controller
         PersonTarget::create([
             'person_id' => $person->id,
             'master_target_id' => $masterId,
-            'title' => $title,
             'is_completed' => false,
+            'title' => $title,
         ]);
 
         return redirect()->route('monitoring.index')->with('success', 'Target berhasil ditambahkan ke ' . $person->name);
