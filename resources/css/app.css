@@ -1921,232 +1921,314 @@ label {
 }
 
 /* ==========================================================================
-   RULER TIMELINE ("ALA ALA PENGGARIS")
+   LITERAL HORIZONTAL RULER TIMELINE (PENGGARIS MURNI TANPA CARD BOX)
    ========================================================================== */
 
-.ruler-wrapper {
+.literal-ruler-wrapper {
     position: relative;
-    overflow: hidden;
+    padding: 1.5rem;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
 }
 
-.ruler-header {
+.literal-ruler-legend {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding-bottom: 1rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.ruler-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.ruler-legend {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
+    gap: 1.5rem;
     font-size: 0.8rem;
     color: var(--text-secondary);
+    margin-bottom: 2rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
 }
 
 .legend-tick {
     display: inline-block;
-    width: 2px;
-    background: #fff;
+    border-radius: 2px;
 }
 
-.legend-tick.major { height: 16px; width: 3px; background: var(--primary); }
-.legend-tick.minor { height: 12px; background: #64748b; }
-.legend-avatar {
-    width: 12px;
-    height: 12px;
+.legend-tick.major { height: 18px; width: 4px; background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+.legend-tick.minor { height: 12px; width: 2px; background: #94a3b8; }
+.legend-circle-icon {
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: var(--primary);
-    border: 2px solid #fff;
+    background: #1e293b;
+    border: 2px solid var(--primary);
+    box-shadow: 0 0 6px var(--primary-glow);
 }
 
-.ruler-track-container {
+.literal-ruler-scroll-area {
+    width: 100%;
     overflow-x: auto;
-    padding: 1.5rem 0.5rem 2.5rem 0.5rem;
+    padding: 4.5rem 1rem 3.5rem 1rem;
     scroll-behavior: smooth;
 }
 
-.ruler-track-container::-webkit-scrollbar {
-    height: 8px;
+.literal-ruler-scroll-area::-webkit-scrollbar {
+    height: 6px;
 }
 
-.ruler-track-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
+.literal-ruler-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
 }
 
-.ruler-track {
+.literal-ruler-canvas {
     position: relative;
-    min-width: 900px;
-    padding-top: 1rem;
+    display: inline-flex;
+    flex-direction: column;
+    min-width: 100%;
 }
 
-/* Horizontal Main Baseline Line */
-.ruler-main-line {
-    position: absolute;
-    top: 55px;
-    left: 0;
-    right: 0;
+/* HORIZONTAL BASELINE AT THE BOTTOM OF TICKS */
+.literal-ruler-baseline-line {
+    width: 100%;
     height: 3px;
-    background: linear-gradient(90deg, var(--primary) 0%, #3b82f6 50%, #10b981 100%);
-    box-shadow: 0 0 12px var(--primary-glow);
-    z-index: 1;
-}
-
-.ruler-milestones-flex {
-    display: flex;
-    justify-content: space-between;
-    gap: 2rem;
+    background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
     position: relative;
     z-index: 2;
 }
 
-.ruler-segment {
-    flex: 1;
-    min-width: 240px;
+/* TICKS ROW */
+.literal-ruler-ticks-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 3.5rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    position: relative;
+    z-index: 3;
+}
+
+.ruler-tick-column {
     display: flex;
     flex-direction: column;
-}
-
-/* MAJOR TICK (Capstone Utama) */
-.ruler-tick-item {
+    align-items: center;
     position: relative;
+    min-width: 45px;
+}
+
+.ruler-tick-num {
+    font-size: 0.75rem;
+    font-weight: 800;
+    margin-bottom: 6px;
     cursor: pointer;
-    transition: transform 0.2s ease;
+    transition: color 0.2s ease;
 }
 
-.ruler-tick-item:hover {
-    transform: translateY(-2px);
+.ruler-tick-num.major {
+    color: var(--primary);
+    font-size: 0.85rem;
 }
 
-.ruler-tick-mark {
-    width: 4px;
-    background: var(--text-secondary);
-    border-radius: 2px;
+.ruler-tick-num.minor {
+    color: #94a3b8;
+}
+
+.ruler-tick-num:hover {
+    color: #fff;
+    text-shadow: 0 0 8px var(--primary);
+}
+
+/* VERTICAL TICK LINES (STANDING UP FROM BASELINE) */
+.ruler-vertical-tick {
     transition: all 0.2s ease;
+    cursor: pointer;
+    border-radius: 2px;
 }
 
-.ruler-tick-mark.major {
-    height: 44px;
+.ruler-vertical-tick.major-tick-line {
+    height: 65px;
     width: 4px;
     background: #fff;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-    margin-bottom: 8px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
 }
 
-.ruler-segment.theme-purple .ruler-tick-mark.major { background: #a78bfa; box-shadow: 0 0 10px rgba(167, 139, 250, 0.6); }
-.ruler-segment.theme-blue .ruler-tick-mark.major { background: #60a5fa; box-shadow: 0 0 10px rgba(96, 165, 250, 0.6); }
-.ruler-segment.theme-green .ruler-tick-mark.major { background: #34d399; box-shadow: 0 0 10px rgba(52, 211, 153, 0.6); }
-.ruler-segment.theme-orange .ruler-tick-mark.major { background: #fb923c; box-shadow: 0 0 10px rgba(251, 146, 60, 0.6); }
-.ruler-segment.theme-cyan .ruler-tick-mark.major { background: #22d3ee; box-shadow: 0 0 10px rgba(34, 211, 238, 0.6); }
-.ruler-segment.theme-red .ruler-tick-mark.major { background: #f87171; box-shadow: 0 0 10px rgba(248, 113, 113, 0.6); }
+.ruler-vertical-tick.minor-tick-line {
+    height: 38px;
+    width: 2px;
+    background: #94a3b8;
+}
 
-.ruler-tick-header {
-    background: rgba(17, 25, 40, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.ruler-tick-column.theme-purple .major-tick-line { background: #a78bfa; box-shadow: 0 0 12px rgba(167, 139, 250, 0.7); }
+.ruler-tick-column.theme-blue .major-tick-line { background: #60a5fa; box-shadow: 0 0 12px rgba(96, 165, 250, 0.7); }
+.ruler-tick-column.theme-green .major-tick-line { background: #34d399; box-shadow: 0 0 12px rgba(52, 211, 153, 0.7); }
+.ruler-tick-column.theme-orange .major-tick-line { background: #fb923c; box-shadow: 0 0 12px rgba(251, 146, 60, 0.7); }
+.ruler-tick-column.theme-cyan .major-tick-line { background: #22d3ee; box-shadow: 0 0 12px rgba(34, 211, 238, 0.7); }
+.ruler-tick-column.theme-red .major-tick-line { background: #f87171; box-shadow: 0 0 12px rgba(248, 113, 113, 0.7); }
+
+.ruler-vertical-tick:hover {
+    background: #fff !important;
+    box-shadow: 0 0 16px var(--primary-glow) !important;
+    transform: scaleY(1.15);
+}
+
+/* HOVER PREVIEW TOOLTIP (DIARAHKAN CURSOR) */
+.ruler-hover-preview {
+    position: absolute;
+    bottom: calc(100% + 28px);
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1.5px solid var(--primary);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 15px var(--primary-glow);
     border-radius: 10px;
-    padding: 0.65rem 0.85rem;
+    padding: 0.75rem 1rem;
+    min-width: 200px;
+    max-width: 280px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25 ease, transform 0.25s ease, visibility 0.25s ease;
+    z-index: 100;
+}
+
+.ruler-tick-column:hover .ruler-hover-preview {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.ruler-hover-preview::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 7px;
+    border-style: solid;
+    border-color: var(--primary) transparent transparent transparent;
+}
+
+.preview-header {
     display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    backdrop-filter: blur(8px);
-    transition: all 0.2s ease;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35rem;
 }
 
-.ruler-tick-item.major-tick:hover .ruler-tick-header {
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-}
-
-.ruler-capstone-num {
-    font-size: 0.7rem;
+.preview-tag {
+    font-size: 0.65rem;
     font-weight: 800;
-    color: var(--primary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
 }
 
-.ruler-capstone-title {
-    font-size: 0.95rem;
+.preview-tag.major { background: var(--primary); color: #fff; }
+.preview-tag.minor { background: #334155; color: #94a3b8; }
+
+.btn-xs-preview-edit {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    cursor: pointer;
+}
+
+.btn-xs-preview-edit:hover {
+    color: #fff;
+}
+
+.preview-title {
+    font-size: 0.875rem;
     font-weight: 700;
     color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
 }
 
-.ruler-date-badge {
+.preview-desc {
     font-size: 0.75rem;
     color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+    line-height: 1.3;
 }
 
-.ruler-status-badge {
-    display: inline-block;
-    align-self: flex-start;
-    padding: 0.15rem 0.5rem;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.ruler-status-badge.status-pending { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
-.ruler-status-badge.status-in_progress { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-.ruler-status-badge.status-completed { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-
-/* AVATAR CIRCLES UNDER TICK ("BULET-BULET") */
-.ruler-avatar-group {
-    display: flex;
-    align-items: center;
-    margin-top: 0.65rem;
-    padding-left: 0.25rem;
-}
-
-.person-circle-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
+/* AVATAR CIRCLES UNDER BASELINE LINE (`o o`) */
+.ruler-avatars-below {
+    position: absolute;
+    top: calc(100% + 12px);
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #090d16;
-    margin-left: -8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-    transition: transform 0.2s ease, z-index 0.2s ease;
-    position: relative;
+    gap: 4px;
+    z-index: 4;
 }
 
-.person-circle-avatar:first-child {
-    margin-left: 0;
+.ruler-circle-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border: 2px solid var(--primary);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
 }
 
-.person-circle-avatar:hover {
-    transform: scale(1.25);
+.ruler-circle-avatar.mini {
+    width: 22px;
+    height: 22px;
+    font-size: 0.6rem;
+    border-width: 1.5px;
+    border-color: #64748b;
+    background: #1e293b;
+}
+
+.ruler-circle-avatar:hover {
+    transform: scale(1.3);
+    background: var(--primary);
+    border-color: #fff;
+    box-shadow: 0 0 12px var(--primary-glow);
     z-index: 10;
 }
+
+.btn-inline-add-sub {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-bottom: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-inline-add-sub:hover {
+    background: var(--primary);
+    border-style: solid;
+    color: #fff;
+    box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.spacer-tick-line {
+    height: 25px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
 
 .person-circle-avatar.more-avatar {
     background: #334155;

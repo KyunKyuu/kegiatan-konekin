@@ -13,7 +13,7 @@
                     <i class="fa-solid fa-ruler-combined text-primary-glow"></i> Monitoring Capstone Objective
                 </h1>
                 <p class="monitoring-subtitle text-muted">
-                    Visualisasi ruler timeline permanen se-halaman untuk Capstone Utama & Sub Capstone
+                    Visualisasi ruler timeline horizontal se-halaman untuk Capstone Utama & Sub Capstone
                 </p>
             </div>
             <div class="monitoring-header-actions">
@@ -35,21 +35,17 @@
     </div>
 
     <!-- =========================================================================
-         FULL-PAGE HERO RULER TIMELINE ("ALA ALA PENGGARIS")
+         LITERAL PHYSICAL HORIZONTAL RULER TIMELINE (PENGGARIS MURNI TANPA CARD)
          ========================================================================= -->
-    <div class="ruler-wrapper glass-panel ruler-hero-panel">
-        <div class="ruler-header">
-            <div class="ruler-title">
-                <i class="fa-solid fa-sliders"></i> Full-Page Timeline Ruler
-            </div>
-            <div class="ruler-legend">
-                <span class="legend-item"><span class="legend-tick major"></span> Capstone Utama (Major Tick)</span>
-                <span class="legend-item"><span class="legend-tick minor"></span> Sub Capstone (Minor Tick)</span>
-                <span class="legend-item"><span class="legend-avatar"></span> Penanggung Jawab ("Bulet-bulet")</span>
-            </div>
+    <div class="literal-ruler-wrapper glass-panel">
+        
+        <div class="literal-ruler-legend">
+            <span class="legend-item"><span class="legend-tick major"></span> Capstone Utama (Major Tick)</span>
+            <span class="legend-item"><span class="legend-tick minor"></span> Sub Capstone (Minor Tick)</span>
+            <span class="legend-item"><span class="legend-circle-icon"></span> Penanggung Jawab ("Bulet-bulet" di bawah garis)</span>
         </div>
 
-        <div class="ruler-track-container" id="rulerTrackContainer">
+        <div class="literal-ruler-scroll-area">
             @if($mainMilestones->isEmpty())
                 <div class="ruler-empty-state">
                     <i class="fa-solid fa-ruler-horizontal empty-icon"></i>
@@ -63,95 +59,118 @@
                     @endauth
                 </div>
             @else
-                <div class="ruler-track">
-                    <!-- Continuous Horizontal Baseline Ruler Line -->
-                    <div class="ruler-main-line"></div>
-
-                    <!-- Render Main Capstones & Sub Capstones along the full-width ruler -->
-                    <div class="ruler-milestones-flex">
+                <div class="literal-ruler-canvas">
+                    
+                    <!-- TICKS ROW (STANDING UP FROM BASELINE) -->
+                    <div class="literal-ruler-ticks-row">
                         @foreach($mainMilestones as $mainIndex => $main)
-                            <div class="ruler-segment {{ $main->color }}" data-id="{{ $main->id }}">
+                            
+                            <!-- MAJOR TICK COLUMN (CAPSTONE UTAMA) -->
+                            <div class="ruler-tick-column major-column" data-id="{{ $main->id }}">
                                 
-                                <!-- MAJOR TICK (CAPSTONE UTAMA) -->
-                                <div class="ruler-tick-item major-tick" onclick="showMilestoneDetail({{ json_encode($main) }})">
-                                    <div class="ruler-tick-mark major"></div>
-                                    <div class="ruler-tick-header">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="ruler-capstone-num">#{{ $mainIndex + 1 }}</span>
-                                            @auth
-                                                @if(Auth::user()->is_admin)
-                                                    <span class="btn-icon btn-xs" onclick="event.stopPropagation(); openEditModal({{ json_encode($main) }})" title="Edit Capstone">
-                                                        <i class="fa-solid fa-pen"></i>
-                                                    </span>
-                                                @endif
-                                            @endauth
-                                        </div>
-                                        <span class="ruler-capstone-title">{{ $main->title }}</span>
-                                        @if($main->description)
-                                            <span class="ruler-capstone-desc text-muted text-xs">{{ Str::limit($main->description, 45) }}</span>
-                                        @endif
+                                <!-- Hover Tooltip Preview (Muncul saat cursor diarahkan) -->
+                                <div class="ruler-hover-preview">
+                                    <div class="preview-header">
+                                        <span class="preview-tag major">Capstone #{{ $mainIndex + 1 }}</span>
+                                        @auth
+                                            @if(Auth::user()->is_admin)
+                                                <button type="button" class="btn-xs-preview-edit" onclick="event.stopPropagation(); openEditModal({{ json_encode($main) }})">
+                                                    <i class="fa-solid fa-pen"></i> Edit
+                                                </button>
+                                            @endif
+                                        @endauth
                                     </div>
-                                    
-                                    <!-- Avatar circles under Major Tick ("bulet-bulet") -->
-                                    <div class="ruler-avatar-group">
-                                        @foreach($main->people->take(5) as $person)
-                                            <span class="person-circle-avatar" 
-                                                  title="Klik untuk detail {{ $person->name }}" 
-                                                  onclick="event.stopPropagation(); openPersonDetailModal({{ $person->id }})">
-                                                {{ strtoupper(substr($person->name, 0, 2)) }}
-                                            </span>
-                                        @endforeach
-                                        @if($main->people->count() > 5)
-                                            <span class="person-circle-avatar more-avatar" title="{{ $main->people->count() - 5 }} orang lainnya" onclick="event.stopPropagation(); showMilestoneDetail({{ json_encode($main) }})">
-                                                +{{ $main->people->count() - 5 }}
-                                            </span>
-                                        @endif
-                                        @if($main->people->isEmpty())
-                                            <span class="no-person-indicator text-muted text-xs" title="Belum ada penanggung jawab">-</span>
-                                        @endif
+                                    <h4 class="preview-title">{{ $main->title }}</h4>
+                                    @if($main->description)
+                                        <p class="preview-desc">{{ $main->description }}</p>
+                                    @endif
+                                    <div class="preview-people text-xs text-muted">
+                                        <i class="fa-solid fa-users"></i> {{ $main->people->count() }} Orang
                                     </div>
                                 </div>
 
-                                <!-- SUB CAPSTONES (MINOR TICKS) -->
-                                <div class="ruler-sub-ticks-container">
-                                    @foreach($main->subMilestones as $subIndex => $sub)
-                                        <div class="ruler-tick-item minor-tick" onclick="showMilestoneDetail({{ json_encode($sub) }})">
-                                            <div class="ruler-tick-mark minor"></div>
-                                            <div class="ruler-sub-header">
-                                                <span class="ruler-sub-num">{{ $mainIndex + 1 }}.{{ $subIndex + 1 }}</span>
-                                                <span class="ruler-sub-title" title="{{ $sub->title }}">{{ $sub->title }}</span>
-                                            </div>
+                                <!-- Tick Label Number Above -->
+                                <span class="ruler-tick-num major" onclick="showMilestoneDetail({{ json_encode($main) }})">#{{ $mainIndex + 1 }}</span>
 
-                                            <!-- Avatar circles under Minor Tick ("bulet-bulet") -->
-                                            <div class="ruler-avatar-group minor-group">
-                                                @foreach($sub->people->take(4) as $subPerson)
-                                                    <span class="person-circle-avatar mini-avatar" 
-                                                          title="Klik untuk detail {{ $subPerson->name }}" 
-                                                          onclick="event.stopPropagation(); openPersonDetailModal({{ $subPerson->id }})">
-                                                        {{ strtoupper(substr($subPerson->name, 0, 2)) }}
-                                                    </span>
-                                                @endforeach
-                                                @if($sub->people->count() > 4)
-                                                    <span class="person-circle-avatar mini-avatar more-avatar" title="{{ $sub->people->count() - 4 }} orang lainnya">
-                                                        +{{ $sub->people->count() - 4 }}
-                                                    </span>
-                                                @endif
-                                            </div>
-                                        </div>
+                                <!-- Vertical Tick Line (Tall) standing UP from baseline -->
+                                <div class="ruler-vertical-tick major-tick-line {{ $main->color }}" onclick="showMilestoneDetail({{ json_encode($main) }})"></div>
+
+                                <!-- Avatar circles UNDER the baseline line ("bulet-bulet" `o o`) -->
+                                <div class="ruler-avatars-below">
+                                    @foreach($main->people as $person)
+                                        <span class="ruler-circle-avatar" 
+                                              title="{{ $person->name }} (Klik detail profil)" 
+                                              onclick="openPersonDetailModal({{ $person->id }})">
+                                            {{ strtoupper(substr($person->name, 0, 2)) }}
+                                        </span>
                                     @endforeach
-
-                                    @auth
-                                        @if(Auth::user()->is_admin)
-                                            <button class="btn-add-sub-tick" onclick="openCreateModal({{ $main->id }})" title="Tambah Sub Capstone">
-                                                <i class="fa-solid fa-plus"></i> Sub
-                                            </button>
-                                        @endif
-                                    @endauth
                                 </div>
 
                             </div>
+
+                            <!-- SUB CAPSTONES (MINOR TICKS) FOR THIS CAPSTONE -->
+                            @foreach($main->subMilestones as $subIndex => $sub)
+                                <div class="ruler-tick-column minor-column" data-id="{{ $sub->id }}">
+                                    
+                                    <!-- Hover Tooltip Preview (Muncul saat cursor diarahkan) -->
+                                    <div class="ruler-hover-preview">
+                                        <div class="preview-header">
+                                            <span class="preview-tag minor">Sub {{ $mainIndex + 1 }}.{{ $subIndex + 1 }}</span>
+                                            @auth
+                                                @if(Auth::user()->is_admin)
+                                                    <button type="button" class="btn-xs-preview-edit" onclick="event.stopPropagation(); openEditModal({{ json_encode($sub) }})">
+                                                        <i class="fa-solid fa-pen"></i> Edit
+                                                    </button>
+                                                @endif
+                                            @endauth
+                                        </div>
+                                        <h4 class="preview-title">{{ $sub->title }}</h4>
+                                        @if($sub->description)
+                                            <p class="preview-desc">{{ $sub->description }}</p>
+                                        @endif
+                                        <div class="preview-people text-xs text-muted">
+                                            <i class="fa-solid fa-users"></i> {{ $sub->people->count() }} Orang
+                                        </div>
+                                    </div>
+
+                                    <!-- Tick Label Number Above -->
+                                    <span class="ruler-tick-num minor" onclick="showMilestoneDetail({{ json_encode($sub) }})">{{ $mainIndex + 1 }}.{{ $subIndex + 1 }}</span>
+
+                                    <!-- Vertical Tick Line (Shorter) standing UP from baseline -->
+                                    <div class="ruler-vertical-tick minor-tick-line" onclick="showMilestoneDetail({{ json_encode($sub) }})"></div>
+
+                                    <!-- Avatar circles UNDER the baseline line ("bulet-bulet" `o o`) -->
+                                    <div class="ruler-avatars-below">
+                                        @foreach($sub->people as $subPerson)
+                                            <span class="ruler-circle-avatar mini" 
+                                                  title="{{ $subPerson->name }} (Klik detail profil)" 
+                                                  onclick="openPersonDetailModal({{ $subPerson->id }})">
+                                                {{ strtoupper(substr($subPerson->name, 0, 2)) }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+
+                                </div>
+                            @endforeach
+
+                            @auth
+                                @if(Auth::user()->is_admin)
+                                    <!-- Add Sub Capstone Tick Column -->
+                                    <div class="ruler-tick-column add-sub-column">
+                                        <button class="btn-inline-add-sub" onclick="openCreateModal({{ $main->id }})" title="Tambah Sub Capstone">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                        <div class="ruler-vertical-tick spacer-tick-line"></div>
+                                    </div>
+                                @endif
+                            @endauth
+
                         @endforeach
                     </div>
+
+                    <!-- CONTINUOUS HORIZONTAL BASELINE LINE AT THE BOTTOM -->
+                    <div class="literal-ruler-baseline-line"></div>
+
                 </div>
             @endif
         </div>
