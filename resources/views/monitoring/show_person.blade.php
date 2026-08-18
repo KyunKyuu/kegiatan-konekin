@@ -136,7 +136,7 @@
                                 <p class="note-post-content text-xs mt-2 mb-2">{{ $note->note }}</p>
                             @endif
                             <div class="note-post-footer text-muted text-xs">
-                                <span><i class="fa-regular fa-user"></i> {{ $note->user ? $note->user.name : 'Admin' }}</span>
+                                <span><i class="fa-regular fa-user"></i> {{ $note->user ? $note->user->name : 'Admin' }}</span>
                                 <span><i class="fa-regular fa-clock"></i> {{ $note->created_at->format('d M Y H:i') }}</span>
                             </div>
                         </div>
@@ -311,7 +311,7 @@
                             </div>
                             <p class="history-reason-text text-xs text-muted mb-2">{{ $history->reason ?? 'Tidak ada alasan khusus.' }}</p>
                             <div class="history-meta-info text-muted text-xs d-flex justify-content-between">
-                                <span><i class="fa-regular fa-user"></i> {{ $history->user ? $history->user.name : 'Admin' }}</span>
+                                <span><i class="fa-regular fa-user"></i> {{ $history->user ? $history->user->name : 'Admin' }}</span>
                                 <span><i class="fa-regular fa-clock"></i> {{ $history->created_at->format('d M Y H:i') }}</span>
                             </div>
                         </div>
