@@ -1971,7 +1971,7 @@ label {
 .literal-ruler-scroll-area {
     width: 100%;
     overflow-x: auto;
-    padding: 12rem 2.5rem 5.5rem 2.5rem;
+    padding: 2rem 1rem 5rem 1rem;
     scroll-behavior: smooth;
 }
 
@@ -2002,13 +2002,14 @@ label {
     border-radius: 2px;
 }
 
-/* TICKS ROW */
+/* TICKS ROW - PADDING LAPANG UNTUK HOVER TOOLTIP ANTI TERPOTONG */
 .literal-ruler-ticks-row {
     display: flex;
     align-items: flex-end;
-    gap: 5.5rem;
-    padding-left: 3rem;
-    padding-right: 3rem;
+    gap: 6rem;
+    padding-left: 240px;
+    padding-right: 240px;
+    padding-top: 160px;
     position: relative;
     z-index: 3;
 }
@@ -3397,12 +3398,17 @@ label {
     border-radius: 6px;
 }
 
-/* SCALE BOXES & SLIDERS */
+/* SCALE BOXES & SLIDERS - FLAT DIVIDERS TANPA BOX BERTUMPUK */
 .scale-box-row {
-    background: #1e293b;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 12px;
-    padding: 0.85rem 1.1rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.1rem 0;
+    border-radius: 0;
+}
+
+.scale-box-row:last-child {
+    border-bottom: none;
 }
 
 .scale-title-text {
