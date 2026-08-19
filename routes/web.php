@@ -10,10 +10,6 @@ use Illuminate\Support\Facades\Route;
 // Public Calendar View
 Route::get('/', [CalendarController::class, 'index'])->name('calendar');
 
-// Monitoring Module View (Public view, protected actions)
-Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
-Route::get('/monitoring/people/{id}', [MonitoringController::class, 'showPersonDetail'])->name('monitoring.people.show');
-
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -22,14 +18,18 @@ Route::get('/logout', [AuthController::class, 'logout']); // Fallback GET logout
 
 // Autocomplete API & Person Detail (Public GET search or auth search)
 Route::get('/api/people/search', [PeopleApiController::class, 'search'])->name('api.people.search');
-Route::get('/api/people/{id}/detail', [MonitoringController::class, 'getPersonDetail'])->name('api.people.detail');
 
-// Activity & Milestone CRUD (Protected by auth)
+// Activity, Monitoring & Milestone CRUD (Protected by auth)
 Route::middleware(['auth'])->group(function () {
     Route::post('/activities', [CalendarController::class, 'store'])->name('activities.store');
     Route::post('/activities/{id}', [CalendarController::class, 'update'])->name('activities.update');
     Route::post('/activities/{id}/delete', [CalendarController::class, 'destroy'])->name('activities.destroy');
     
+    // Monitoring Views & Actions (Protected behind login)
+    Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
+    Route::get('/monitoring/people/{id}', [MonitoringController::class, 'showPersonDetail'])->name('monitoring.people.show');
+    Route::get('/api/people/{id}/detail', [MonitoringController::class, 'getPersonDetail'])->name('api.people.detail');
+
     // Monitoring Milestones & Person Profile CRUD
     Route::post('/monitoring/milestones', [MonitoringController::class, 'store'])->name('monitoring.milestones.store');
     Route::post('/monitoring/milestones/{id}', [MonitoringController::class, 'update'])->name('monitoring.milestones.update');
